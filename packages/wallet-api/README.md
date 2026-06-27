@@ -140,19 +140,21 @@ Do not remove AA-specific methods when extending handlers.
 
 `@ancore/wallet-api` follows [Semantic Versioning](https://semver.org).
 
-| Range | Meaning | Current state |
-|-------|---------|---------------|
-| `0.x` | Public API is in progress — minor releases may contain breaking changes | **Publishing now** |
-| `1.0.0` | All methods fully wired to extension handlers; API is stable | Gated on [#766](https://github.com/ancore-org/ancore/issues/766) |
-| `^1.x` | Breaking API change → major bump; additive change → minor bump | After 1.0.0 |
+| Range   | Meaning                                                                 | Current state                                                    |
+| ------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `0.x`   | Public API is in progress — minor releases may contain breaking changes | **Publishing now**                                               |
+| `1.0.0` | All methods fully wired to extension handlers; API is stable            | Gated on [#766](https://github.com/ancore-org/ancore/issues/766) |
+| `^1.x`  | Breaking API change → major bump; additive change → minor bump          | After 1.0.0                                                      |
 
 **What "breaking" means for this package:**
+
 - Removing or renaming an exported function or type
 - Changing the resolved type of a Promise return value
 - Adding a required parameter to an existing function
 - Changing error class names (dApps `instanceof`-check these)
 
 **What is not breaking:**
+
 - Adding a new exported function
 - Adding optional parameters (new overload)
 - Extending a return type with new optional fields
