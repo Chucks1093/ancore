@@ -78,7 +78,6 @@ describe('extension router', () => {
     expect(document.title).toBe('Unlock Wallet | Ancore Extension');
     expect(JSON.parse(window.localStorage.getItem(AUTH_STORAGE_KEY) ?? '{}')).toMatchObject({
       hasOnboarded: true,
-      isUnlocked: false,
     });
   });
 
@@ -95,7 +94,6 @@ describe('extension router', () => {
     renderRouter('/home', {
       ...DEFAULT_AUTH_STATE,
       hasOnboarded: true,
-      isUnlocked: true,
     });
 
     await waitForAuthReady();
@@ -110,7 +108,6 @@ describe('extension router', () => {
     renderRouter('/not-a-real-route', {
       ...DEFAULT_AUTH_STATE,
       hasOnboarded: true,
-      isUnlocked: true,
     });
 
     await waitForAuthReady();
@@ -127,7 +124,6 @@ describe('extension router', () => {
     renderRouter('/session-keys', {
       ...DEFAULT_AUTH_STATE,
       hasOnboarded: true,
-      isUnlocked: true,
     });
 
     await waitForAuthReady();
@@ -145,7 +141,6 @@ describe('extension router', () => {
     renderRouter('/settings', {
       ...DEFAULT_AUTH_STATE,
       hasOnboarded: true,
-      isUnlocked: true,
     });
 
     await user.click(screen.getByRole('button', { name: /environment/i }));
@@ -179,7 +174,6 @@ describe('extension transaction history', () => {
   const unlockedAuthState = {
     ...DEFAULT_AUTH_STATE,
     hasOnboarded: true,
-    isUnlocked: true,
   };
 
   const SAMPLE_ENTRIES: HistoryEntry[] = [
