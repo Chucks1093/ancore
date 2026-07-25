@@ -10,20 +10,17 @@ const TEST_SMART_ACCOUNT_ID = 'CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 const AUTH_PRESETS = {
   fresh: {
     hasOnboarded: false,
-    isUnlocked: false,
     walletName: 'Ancore Wallet',
     accountAddress: 'GCFX...WALLET',
   },
   'onboarded-locked': {
     hasOnboarded: true,
-    isUnlocked: false,
     walletName: 'Test Wallet',
     accountAddress: 'GCFX...WALLET',
     smartAccountId: TEST_SMART_ACCOUNT_ID,
   },
   'onboarded-unlocked': {
     hasOnboarded: true,
-    isUnlocked: true,
     walletName: 'Test Wallet',
     accountAddress: 'GCFX...WALLET',
     smartAccountId: TEST_SMART_ACCOUNT_ID,
