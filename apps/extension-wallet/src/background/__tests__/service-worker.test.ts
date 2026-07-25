@@ -53,6 +53,7 @@ interface ChromeMock {
 function buildChromeMock(): ChromeMock {
   const capturedListeners: OnMessageListener[] = [];
   const sessionStore: Record<string, unknown> = {};
+  const localStore: Record<string, unknown> = {};
 
   const mock: ChromeMock = {
     runtime: {
@@ -74,8 +75,21 @@ function buildChromeMock(): ChromeMock {
     },
     storage: {
       local: {
-        get: vi.fn((_key: string, cb: (r: Record<string, unknown>) => void) => cb({})),
-        set: vi.fn((_items: Record<string, unknown>, cb?: () => void) => cb?.()),
+        get: vi.fn((key: string | string[], cb: (r: Record<string, unknown>) => void) => {
+          if (typeof key === 'string') {
+            cb({ [key]: localStore[key] });
+          } else {
+            const result: Record<string, unknown> = {};
+            for (const k of key) {
+              result[k] = localStore[k];
+            }
+            cb(result);
+          }
+        }),
+        set: vi.fn((items: Record<string, unknown>, cb?: () => void) => {
+          Object.assign(localStore, items);
+          cb?.();
+        }),
       },
       session: {
         get: vi.fn((key: string, cb: (r: Record<string, unknown>) => void) =>
@@ -124,7 +138,6 @@ let chromeMock: ChromeMock;
 function makeAuthState(overrides: Partial<AuthState> = {}): AuthState {
   return {
     hasOnboarded: false,
-    isUnlocked: false,
     walletName: 'Test Wallet',
     accountAddress: 'GCFX...WALLET',
     ...overrides,
@@ -235,22 +248,6 @@ describe('LOCK_WALLET', () => {
     expect((stateResp.payload as any).state).toBe('locked');
     _resetHandlers();
   });
-
-  it('persists isUnlocked: false to chrome storage', async () => {
-    const { _resetHandlers } = await loadServiceWorker(makeAuthState({ hasOnboarded: true }));
-
-    await dispatch(chromeMock, 'LOCK_WALLET');
-
-    const setCall = chromeMock.storage.local.set.mock.calls.at(-1)?.[0] as Record<string, unknown>;
-    if (setCall) {
-      const stored = JSON.parse(setCall['ancore_extension_auth'] as string) as Record<
-        string,
-        unknown
-      >;
-      expect(stored.isUnlocked).toBe(false);
-    }
-    _resetHandlers();
-  });
 });
 
 // ---------------------------------------------------------------------------
@@ -301,22 +298,6 @@ describe('UNLOCK_WALLET', () => {
 
     expect(resp.ok).toBe(true);
     expect((resp.payload as any).success).toBe(true);
-    _resetHandlers();
-  });
-
-  it('persists isUnlocked: true to chrome storage on success', async () => {
-    const { _resetHandlers } = await loadServiceWorker(makeAuthState({ hasOnboarded: true }));
-
-    await dispatch(chromeMock, 'UNLOCK_WALLET', { password: 'any-password' });
-
-    const setCall = chromeMock.storage.local.set.mock.calls.at(-1)?.[0] as Record<string, unknown>;
-    if (setCall) {
-      const stored = JSON.parse(setCall['ancore_extension_auth'] as string) as Record<
-        string,
-        unknown
-      >;
-      expect(stored.isUnlocked).toBe(true);
-    }
     _resetHandlers();
   });
 

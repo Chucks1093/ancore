@@ -1,6 +1,6 @@
 import { installMessageDispatcher } from '@/messaging';
 import { registerInternalHandlers, probeServicesOnStartup } from './handlers';
-import { restoreUnlockSessionFromStorage } from './session-state';
+import { restoreUnlockSessionFromStorage, refreshSessionExpiry } from './session-state';
 import {
   registerAllExternalHandlers,
   dispatchExternalRequest,
@@ -117,6 +117,19 @@ storage?.onChanged?.addListener((changes, areaName) => {
               });
           }
         });
+      });
+    }
+
+    // Check if auto-lock settings changed
+    if (newSettings?.autoLockMinutes !== oldSettings?.autoLockMinutes) {
+      console.info(`${logPrefix} auto-lock settings changed`, {
+        from: oldSettings?.autoLockMinutes,
+        to: newSettings?.autoLockMinutes,
+      });
+
+      // Refresh session expiry with new TTL if currently unlocked
+      void refreshSessionExpiry().then(() => {
+        console.info(`${logPrefix} session expiry refreshed with new auto-lock TTL`);
       });
     }
   }
