@@ -126,7 +126,7 @@ export interface IsConnectedResult {
  */
 export interface GetSmartAccountResult {
   readonly contractId: string;
-  readonly deploymentStatus: 'deployed' | 'pending' | 'not_deployed';
+  readonly deploymentStatus: 'deployed' | 'pending' | 'not_deployed' | 'unknown';
   readonly network: string;
 }
 

@@ -1,8 +1,8 @@
 /**
- * Unit tests for handleGetPublicKey and handleGetNetwork (#809)
+ * Unit tests for handleGetPublicKey, handleGetNetwork, and handleGetSmartAccount (#809, #960)
  */
 
-import { handleGetPublicKey, handleGetNetwork } from '../handlers';
+import { handleGetPublicKey, handleGetNetwork, handleGetSmartAccount } from '../handlers';
 import type { ExternalHandlerContext } from '@ancore/types';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────
@@ -30,18 +30,41 @@ vi.mock('../allowlist', () => ({
   addToAllowlist: vi.fn(),
 }));
 
+// ── handleGetSmartAccount mocks ───────────────────────────────────────────────
+
+let mockGetOwner: ReturnType<typeof vi.fn>;
+
+vi.mock('@ancore/account-abstraction', () => ({
+  AccountContract: vi.fn().mockImplementation(() => ({
+    getOwner: (...args: unknown[]) => mockGetOwner(...args),
+  })),
+}));
+
+vi.mock('@stellar/stellar-sdk', () => ({
+  rpc: {
+    Server: vi.fn().mockImplementation(() => ({
+      getAccount: vi.fn().mockResolvedValue({ accountId: () => 'GAAA', sequenceNumber: () => '0' }),
+      simulateTransaction: vi.fn(),
+    })),
+  },
+}));
+
 // Re-set globalThis.chrome in beforeEach because vitest.setup.ts deletes it
 // before every test to prevent leakage between files.
 beforeEach(() => {
   (globalThis as any).chrome = { storage: { local: mockLocalStorage } };
   Object.keys(localStore).forEach((k) => delete localStore[k]);
   mockLocalStorage.get.mockClear();
+  mockGetOwner = vi.fn();
 });
 
-function makeCtx(origin = 'https://dapp.example'): ExternalHandlerContext {
+function makeCtx(
+  origin = 'https://dapp.example',
+  params: Record<string, unknown> = {}
+): ExternalHandlerContext {
   return {
     origin,
-    params: {},
+    params,
     requestId: 'test-req-id',
     sender: {},
   };
@@ -88,5 +111,80 @@ describe('handleGetNetwork', () => {
     await expect(handleGetNetwork(makeCtx('https://untrusted.example'))).rejects.toThrow(
       'Origin not allowed'
     );
+  });
+});
+
+// ── handleGetSmartAccount ─────────────────────────────────────────────────────
+
+describe('handleGetSmartAccount', () => {
+  it('throws when wallet is not set up (no stored address and no params)', async () => {
+    await expect(handleGetSmartAccount(makeCtx())).rejects.toThrow('Wallet not set up');
+  });
+
+  it('throws when origin is not in the allowlist', async () => {
+    const { isAllowed } = await import('../allowlist');
+    vi.mocked(isAllowed).mockResolvedValueOnce(false);
+    localStore['ancore_contract_address'] = CONTRACT_ADDRESS;
+
+    await expect(handleGetSmartAccount(makeCtx('https://untrusted.example'))).rejects.toThrow(
+      'Origin not allowed'
+    );
+  });
+
+  it('returns deployed status when contract exists on-chain', async () => {
+    localStore['ancore_contract_address'] = CONTRACT_ADDRESS;
+    mockGetOwner.mockResolvedValue('GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF');
+
+    const result = await handleGetSmartAccount(makeCtx());
+    expect(result.contractId).toBe(CONTRACT_ADDRESS);
+    expect(result.deploymentStatus).toBe('deployed');
+    expect(result.network).toBe('testnet');
+  });
+
+  it('returns not_deployed status when contract does not exist on-chain', async () => {
+    localStore['ancore_contract_address'] = CONTRACT_ADDRESS;
+    mockGetOwner.mockRejectedValue(new Error('contract not found'));
+
+    const result = await handleGetSmartAccount(makeCtx());
+    expect(result.contractId).toBe(CONTRACT_ADDRESS);
+    expect(result.deploymentStatus).toBe('not_deployed');
+    expect(result.network).toBe('testnet');
+  });
+
+  it('returns unknown status when RPC call fails for network reasons', async () => {
+    localStore['ancore_contract_address'] = CONTRACT_ADDRESS;
+    mockGetOwner.mockRejectedValue(new Error('ECONNREFUSED'));
+
+    const result = await handleGetSmartAccount(makeCtx());
+    expect(result.contractId).toBe(CONTRACT_ADDRESS);
+    expect(result.deploymentStatus).toBe('unknown');
+    expect(result.network).toBe('testnet');
+  });
+
+  it('uses smartAccountId from params when provided', async () => {
+    const paramContractId = 'CDEF567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCD';
+    mockGetOwner.mockResolvedValue('GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF');
+
+    const result = await handleGetSmartAccount(
+      makeCtx('https://dapp.example', { smartAccountId: paramContractId })
+    );
+    expect(result.contractId).toBe(paramContractId);
+    expect(result.deploymentStatus).toBe('deployed');
+  });
+
+  it('returns not_deployed for host object not found errors', async () => {
+    localStore['ancore_contract_address'] = CONTRACT_ADDRESS;
+    mockGetOwner.mockRejectedValue(new Error('host object not found'));
+
+    const result = await handleGetSmartAccount(makeCtx());
+    expect(result.deploymentStatus).toBe('not_deployed');
+  });
+
+  it('returns not_deployed for unknown contract id errors', async () => {
+    localStore['ancore_contract_address'] = CONTRACT_ADDRESS;
+    mockGetOwner.mockRejectedValue(new Error('unknown contract id'));
+
+    const result = await handleGetSmartAccount(makeCtx());
+    expect(result.deploymentStatus).toBe('not_deployed');
   });
 });

@@ -79,6 +79,15 @@ export interface Messages {
     request: { origin: string };
     response: { connected: boolean };
   };
+  /** dApp queries the smart account's on-chain deployment status. */
+  EXTERNAL_GET_SMART_ACCOUNT: {
+    request: { origin: string; network?: string; smartAccountId?: string };
+    response: {
+      contractId: string;
+      deploymentStatus: 'deployed' | 'pending' | 'not_deployed' | 'unknown';
+      network: string;
+    };
+  };
 }
 
 /** Union of all valid message type names */
