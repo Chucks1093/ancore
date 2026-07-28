@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createStellarClient } from '@ancore/stellar';
+import { NETWORK_PASSPHRASES } from '@ancore/wallet-shared';
 import { Operation, Asset, TransactionBuilder, Account } from '@stellar/stellar-sdk';
 
 // ---------------------------------------------------------------------------
@@ -25,13 +26,6 @@ interface UseSendFeeEstimateOptions {
   /** Disable estimation. Default: false. */
   disabled?: boolean;
 }
-
-const NETWORK_PASSPHRASE: Record<string, string> = {
-  testnet: 'Test SDF Network ; September 2015',
-  mainnet: 'Public Global Stellar Network ; September 2015',
-  futurenet: 'Test SDF Future Network ; October 2022',
-  local: 'Standalone Network ; February 2017',
-};
 
 const INITIAL_STATE: FeeEstimateState = {
   fee: '0.0000100',
@@ -80,7 +74,7 @@ export function useSendFeeEstimate(
 
         try {
           const client = createStellarClient(network);
-          const passphrase = NETWORK_PASSPHRASE[network] ?? NETWORK_PASSPHRASE.testnet;
+          const passphrase = NETWORK_PASSPHRASES[network] ?? NETWORK_PASSPHRASES.testnet;
 
           const dummyAccount = new Account(
             'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF',
