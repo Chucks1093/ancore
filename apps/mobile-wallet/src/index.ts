@@ -8,6 +8,7 @@ export * from './navigation';
 export * from './sdk';
 
 export { HistoryScreen } from './screens/history/HistoryScreen';
+export { JailbreakWarningScreen } from './screens/JailbreakWarningScreen';
 
 export type {
   FetchTransactionPageParams,
@@ -20,6 +21,7 @@ export { OnboardingNavigator, OnboardingNavigatorTestHarness } from './navigatio
 
 export type { OnboardingRoute, OnboardingFlow } from './screens/onboarding/types';
 export * from './security';
+export * from './services/secure-clipboard';
 export * from './storage';
 
 // WalletConnect exports
