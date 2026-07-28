@@ -194,15 +194,36 @@ export async function handleSignTransaction(
 
 /**
  * signAuthEntry handler
- * Enqueues an approval request, opens the approval UI, and awaits the user's
- * decision. On approval the popup resolves with { signedAuthEntry }; on
- * rejection it throws so the dApp receives a proper error.
+ * Validates the auth entry XDR before enqueuing approval. Enqueues an approval
+ * request, opens the approval UI, and awaits the user's decision. On approval
+ * the popup resolves with { signedAuthEntry }; on rejection it throws so the
+ * dApp receives a proper error.
  */
 export async function handleSignAuthEntry(
   ctx: ExternalHandlerContext
 ): Promise<{ signedAuthEntry: string }> {
   const { origin, params, requestId } = ctx;
   const typedParams = params as { authEntry?: string; network?: string; smartAccountId?: string };
+
+  // Validate the auth entry XDR before opening any UI.
+  // Invalid XDR → error returned without opening the popup (AC).
+  if (
+    !typedParams.authEntry ||
+    typeof typedParams.authEntry !== 'string' ||
+    typedParams.authEntry.trim().length === 0
+  ) {
+    throw new Error('Invalid auth entry XDR');
+  }
+
+  // Quick base64 decode check — reject obviously invalid payloads early.
+  try {
+    const decoded = Buffer.from(typedParams.authEntry.trim(), 'base64');
+    if (decoded.length === 0) {
+      throw new Error('Invalid auth entry XDR');
+    }
+  } catch {
+    throw new Error('Invalid auth entry XDR');
+  }
 
   const network = typedParams.network || 'testnet';
   const smartAccountId =

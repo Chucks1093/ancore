@@ -16,11 +16,14 @@ export function SignTransactionApprovalScreen({
   title = 'Sign Transaction',
   subtitle = 'Review and approve the transaction',
   description = 'A dApp is requesting to sign a transaction. Approve only if you trust the source.',
+  requestType = 'sign-transaction',
 }: {
   requestId?: string;
   title?: string;
   subtitle?: string;
   description?: string;
+  /** Determines which message types to send to the background on approve/reject. */
+  requestType?: 'sign-transaction' | 'sign-auth-entry';
 }) {
   const requestId = useRequestId(propRequestId);
   const [done, setDone] = React.useState(false);
@@ -29,13 +32,18 @@ export function SignTransactionApprovalScreen({
   function sendToBackground(action: 'approve' | 'reject') {
     if (!requestId) return;
     setSubmitting(true);
-    chrome.runtime.sendMessage(
-      { type: action === 'approve' ? 'APPROVE_SIGN_REQUEST' : 'REJECT_SIGN_REQUEST', requestId },
-      () => {
-        setSubmitting(false);
-        setDone(true);
-      }
-    );
+    const messageType =
+      requestType === 'sign-auth-entry'
+        ? action === 'approve'
+          ? 'APPROVE_AUTH_ENTRY_REQUEST'
+          : 'REJECT_AUTH_ENTRY_REQUEST'
+        : action === 'approve'
+          ? 'APPROVE_SIGN_REQUEST'
+          : 'REJECT_SIGN_REQUEST';
+    chrome.runtime.sendMessage({ type: messageType, requestId }, () => {
+      setSubmitting(false);
+      setDone(true);
+    });
   }
 
   if (!requestId) {

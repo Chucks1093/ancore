@@ -6,7 +6,13 @@ import {
   dispatchExternalRequest,
 } from '@/background/handlers/external';
 import { openMockApproval } from './approval-window';
-import { resolveRequest, rejectRequest } from './handlers/external/response-queue';
+import {
+  resolveRequest,
+  rejectRequest,
+  getApproval,
+  removeApproval,
+} from './handlers/external/response-queue';
+import { signAuthEntry } from './handlers/sign-auth-entry';
 import type { ExternalApiRequest, ExternalApiMethodName } from '@ancore/types';
 
 type ChromeRuntimeManifest = {
@@ -220,6 +226,40 @@ chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) =
   }
   if (msg.type === 'REJECT_SIGN_REQUEST' && msg.requestId) {
     rejectRequest(msg.requestId, new Error('User rejected the sign request'));
+    sendResponse({ ok: true });
+    return true;
+  }
+  if (msg.type === 'APPROVE_AUTH_ENTRY_REQUEST' && msg.requestId) {
+    const pending = getApproval(msg.requestId);
+    if (!pending) {
+      rejectRequest(msg.requestId, new Error('Approval request not found'));
+      sendResponse({ ok: false, error: 'Approval request not found' });
+      return true;
+    }
+    const params = pending.params as { authEntry?: string; networkPassphrase?: string };
+    if (!params?.authEntry) {
+      rejectRequest(msg.requestId, new Error('Auth entry XDR not found in request'));
+      sendResponse({ ok: false, error: 'Auth entry XDR not found' });
+      return true;
+    }
+    void signAuthEntry({
+      authEntryXdr: params.authEntry,
+      networkPassphrase: params.networkPassphrase,
+    })
+      .then((result) => {
+        resolveRequest(msg.requestId!, result);
+        removeApproval(msg.requestId!);
+        sendResponse({ ok: true });
+      })
+      .catch((err: Error) => {
+        rejectRequest(msg.requestId!, err);
+        removeApproval(msg.requestId!);
+        sendResponse({ ok: false, error: err.message });
+      });
+    return true;
+  }
+  if (msg.type === 'REJECT_AUTH_ENTRY_REQUEST' && msg.requestId) {
+    rejectRequest(msg.requestId, new Error('User rejected the auth entry sign request'));
     sendResponse({ ok: true });
     return true;
   }
