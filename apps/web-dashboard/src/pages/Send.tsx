@@ -6,7 +6,9 @@ import { useWalletConnection } from '../hooks/useWalletConnection';
 import type { SendStrategy } from '../services/send-service';
 import type { Transaction } from '../types/dashboard';
 
-const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+import { env } from '../lib/env';
+
+const DEMO_MODE = env.VITE_DEMO_MODE === 'true';
 
 function StatusBadge({ status }: { status: Transaction['status'] }) {
   const styles: Record<string, string> = {
