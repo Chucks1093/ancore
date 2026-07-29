@@ -278,7 +278,7 @@ jobs:
       - name: Lint indexer migrations
         run: pnpm indexer:lint-migrations
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.81.0
         with:
           components: rustfmt, clippy
 

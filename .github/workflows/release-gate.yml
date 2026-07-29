@@ -67,7 +67,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.81.0
         with:
           components: rustfmt,clippy
           targets: wasm32-unknown-unknown
@@ -136,7 +136,7 @@ jobs:
       - name: npm audit (high+)
         run: pnpm audit --audit-level=high
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.81.0
 
       - name: Install cargo-audit
         run: cargo install --locked cargo-audit
