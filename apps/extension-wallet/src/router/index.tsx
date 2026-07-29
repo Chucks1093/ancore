@@ -38,6 +38,8 @@ import { useAccountStore } from '../stores/account';
 import { resolveIndexerUrl } from '../config/urls';
 import { createIndexerActivityAdapter } from '../adapters/indexerActivityAdapter';
 import type { IndexerActivityRecord } from '../adapters/indexerActivityAdapter';
+import { NetworkBadge } from '../components/NetworkBadge';
+import { useSettingsStore } from '../stores/settings';
 
 const APP_TITLE = 'Ancore Extension';
 
@@ -119,6 +121,7 @@ function PageScaffold({
   rightAction?: React.ReactNode;
 }) {
   const navigate = useNavigate();
+  const network = useSettingsStore((s) => s.network);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -136,6 +139,8 @@ function PageScaffold({
           ) : (
             <span className="h-9 w-9" />
           )}
+          {/* Persistent network badge — always visible so users know which network they are on */}
+          <NetworkBadge network={network} />
           {rightAction ?? <span className="h-9 w-9" />}
         </div>
         {eyebrow ? (

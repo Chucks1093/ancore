@@ -7,6 +7,7 @@
  */
 
 import type { ExternalApiRequest, ExternalApiResponse, ExternalApiMethodName } from '@ancore/types';
+import { sendChromeMessage } from './background/chrome-api';
 
 const ANCORE_WALLET_REQUEST = 'ANCORE_WALLET_REQUEST';
 
@@ -41,26 +42,8 @@ async function forwardToBackground(
     origin,
   };
 
-  return new Promise((resolve, reject) => {
-    const chromeRef = (globalThis as { chrome?: any }).chrome;
-    if (!chromeRef?.runtime?.sendMessage) {
-      reject(new Error('Chrome runtime not available'));
-      return;
-    }
-
-    chromeRef.runtime.sendMessage(request, (response: ExternalApiResponse) => {
-      if (chromeRef.runtime.lastError) {
-        reject(new Error(chromeRef.runtime.lastError.message));
-        return;
-      }
-
-      if (response.ok) {
-        resolve(response);
-      } else {
-        reject(new Error(response.error || 'Unknown error'));
-      }
-    });
-  });
+  const response = await sendChromeMessage(request);
+  return response as ExternalApiResponse;
 }
 
 /**

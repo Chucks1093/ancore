@@ -22,22 +22,12 @@ import { isAllowed, addToAllowlist } from './allowlist';
 import { enqueueApproval, registerResponseCallbacks } from './response-queue';
 import { openApprovalWindow } from '../../approval-window';
 import { getSettingsState } from '@/stores/settings';
+import { readChromeLocal } from '../../chrome-api';
 
 /** chrome.storage.local key for the deployed smart-account C-address. */
 const CONTRACT_ADDRESS_KEY = 'ancore_contract_address';
 
-async function readFromChromeLocal(key: string): Promise<string | null> {
-  const chromeRef = (globalThis as { chrome?: any }).chrome;
-  if (chromeRef?.storage?.local) {
-    return new Promise((resolve) => {
-      chromeRef.storage.local.get(key, (result: Record<string, unknown>) => {
-        const value = result[key];
-        resolve(typeof value === 'string' ? value : null);
-      });
-    });
-  }
-  return localStorage.getItem(key);
-}
+const readFromChromeLocal = readChromeLocal;
 
 const DEFAULT_MOCK_SMART_ACCOUNT_ID = 'CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 
