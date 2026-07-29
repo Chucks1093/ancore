@@ -9,6 +9,7 @@ import { createAuthMiddleware } from './middleware/auth';
 import { createAccountRateLimiterMiddleware } from './middleware/accountRateLimiter';
 import { createIdempotencyMiddleware } from './middleware/idempotency';
 import { createPayloadGuardMiddleware } from './middleware/payloadGuard';
+import { createContentTypeGuardMiddleware } from './middleware/contentTypeGuard';
 import { createRequestLoggerMiddleware } from './middleware/requestLogger';
 import { createRequestIdMiddleware } from './middleware/requestId';
 import { createMetricsCollectorMiddleware } from './middleware/metricsCollector';
@@ -196,17 +197,19 @@ export function createApp(
   }
 
   const validateScheduledTransfer = validateBody(createScheduledTransferSchema);
+  const contentTypeGuard = createContentTypeGuardMiddleware();
 
   app.post(
     '/relay/execute',
     auth,
+    contentTypeGuard,
     relayLimiter,
     accountLimiter,
     validate,
     idempotency,
     executeHandler
   );
-  app.post('/relay/validate', auth, relayLimiter, validate, validateHandler);
+  app.post('/relay/validate', auth, contentTypeGuard, relayLimiter, validate, validateHandler);
   app.get('/relay/status', statusLimiter, (_req, res) => res.json(relayService.health()));
   app.get('/health', healthHandler);
   app.get('/metrics', (_req, res) => {

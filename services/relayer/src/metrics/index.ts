@@ -95,11 +95,32 @@ class RelayErrorCounter {
 }
 
 // ---------------------------------------------------------------------------
+// Counter — nonce_operations_total
+// ---------------------------------------------------------------------------
+
+class NonceOperationCounter {
+  private readonly counts: Map<string, number> = new Map();
+
+  increment(outcome: 'replay' | 'valid' | 'error'): void {
+    this.counts.set(outcome, (this.counts.get(outcome) ?? 0) + 1);
+  }
+
+  snapshot(): CounterSnapshot {
+    return Object.fromEntries(this.counts);
+  }
+
+  reset(): void {
+    this.counts.clear();
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Singleton registry
 // ---------------------------------------------------------------------------
 
 export const relayLatency = new RelayLatencyHistogram();
 export const relayErrors = new RelayErrorCounter();
+export const nonceOperations = new NonceOperationCounter();
 
 // ---------------------------------------------------------------------------
 // Prometheus text format serialiser
@@ -135,6 +156,17 @@ export function renderPrometheusMetrics(): string {
   // always appears in the output (avoids "no data" gaps in dashboards).
   if (Object.keys(errorSnap).length === 0) {
     lines.push('relay_errors_total{code=""} 0');
+  }
+
+  // ── nonce_operations_total ───────────────────────────────────────────────
+  lines.push('# HELP nonce_operations_total Counter of nonce check outcomes (replay/valid/error)');
+  lines.push('# TYPE nonce_operations_total counter');
+  const nonceSnap = nonceOperations.snapshot();
+  for (const [outcome, count] of Object.entries(nonceSnap)) {
+    lines.push(`nonce_operations_total{outcome="${outcome}"} ${count}`);
+  }
+  if (Object.keys(nonceSnap).length === 0) {
+    lines.push('nonce_operations_total{outcome=""} 0');
   }
 
   return lines.join('\n') + '\n';

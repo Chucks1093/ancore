@@ -23,6 +23,9 @@
 //! - `executed`: Emitted when a transaction is executed with to, function, and nonce
 //! - `session_key_added`: Emitted when a session key is added with public_key and expires_at
 //! - `session_key_revoked`: Emitted when a session key is revoked with public_key
+//! - `allowed_contracts_set`: Emitted when allowed contracts are updated for a session key
+//! - `module_registered`: Emitted when a validation module is registered
+//! - `module_unregistered`: Emitted when a validation module is unregistered
 
 use soroban_sdk::xdr::ToXdr;
 use soroban_sdk::{
@@ -110,6 +113,24 @@ mod events {
     /// Data: (public_key: BytesN<32>, expires_at: u64)
     pub fn session_key_ttl_refreshed(env: &Env) -> Symbol {
         Symbol::new(env, "session_key_ttl_refreshed")
+    }
+
+    /// Event emitted when contract allowlist for a session key is updated.
+    /// Data: (public_key: BytesN<32>, allowed_contracts: Option<Vec<Address>>)
+    pub fn allowed_contracts_set(env: &Env) -> Symbol {
+        Symbol::new(env, "allowed_contracts_set")
+    }
+
+    /// Event emitted when a validation module is registered.
+    /// Data: (module: Address)
+    pub fn module_registered(env: &Env) -> Symbol {
+        Symbol::new(env, "module_registered")
+    }
+
+    /// Event emitted when a validation module is unregistered.
+    /// Data: (module: Address)
+    pub fn module_unregistered(env: &Env) -> Symbol {
+        Symbol::new(env, "module_unregistered")
     }
 }
 
@@ -512,15 +533,21 @@ impl AncoreAccount {
         let mut session_key = Self::get_session_key(env.clone(), public_key.clone())
             .ok_or(ContractError::SessionKeyNotFound)?;
 
-        session_key.allowed_contracts = allowed_contracts;
+        session_key.allowed_contracts = allowed_contracts.clone();
 
         env.storage()
             .persistent()
-            .set(&DataKey::SessionKey(public_key), &session_key);
+            .set(&DataKey::SessionKey(public_key.clone()), &session_key);
 
         env.storage()
             .instance()
             .extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+
+        // Emit allowed_contracts_set event
+        env.events().publish(
+            (events::allowed_contracts_set(&env),),
+            (public_key, allowed_contracts),
+        );
 
         Ok(())
     }
@@ -541,7 +568,7 @@ impl AncoreAccount {
             .unwrap_or_else(|| Vec::new(&env));
 
         if !modules.contains(&module) {
-            modules.push_back(module);
+            modules.push_back(module.clone());
         }
 
         env.storage()
@@ -550,6 +577,10 @@ impl AncoreAccount {
         env.storage()
             .instance()
             .extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+
+        // Emit module_registered event
+        env.events()
+            .publish((events::module_registered(&env),), module);
 
         Ok(())
     }
@@ -578,6 +609,10 @@ impl AncoreAccount {
         env.storage()
             .instance()
             .extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+
+        // Emit module_unregistered event
+        env.events()
+            .publish((events::module_unregistered(&env),), module);
 
         Ok(())
     }
@@ -2166,4 +2201,73 @@ mod test {
         assert!(matches!(result, Err(Ok(ContractError::ExceededSpendLimit))));
         assert_eq!(client.get_nonce(), 0);
     }
+
+    #[test]
+    fn test_set_allowed_contracts_emits_event() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, AncoreAccount);
+        let client = AncoreAccountClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        init(&env, &client, &owner);
+        env.mock_all_auths();
+
+        let session_pk = BytesN::from_array(&env, &[1u8; 32]);
+        let expires_at = env.ledger().timestamp() + 1000;
+        let mut permissions = Vec::new(&env);
+        permissions.push_back(PERMISSION_EXECUTE);
+
+        client.add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
+
+        let target_contract = Address::generate(&env);
+        let mut allowed = Vec::new(&env);
+        allowed.push_back(target_contract.clone());
+
+        client.set_allowed_contracts(&session_pk, &Some(allowed.clone()));
+
+        let events = env.events().all();
+        let last_event = events.last().unwrap();
+        assert_eq!(
+            last_event.1,
+            (events::allowed_contracts_set(&env),).into_val(&env)
+        );
+    }
+
+    #[test]
+    fn test_register_and_unregister_module_emits_events() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, AncoreAccount);
+        let client = AncoreAccountClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        init(&env, &client, &owner);
+        env.mock_all_auths();
+
+        let module = Address::generate(&env);
+
+        client.register_module(&module);
+        let events = env.events().all();
+        let last_event = events.last().unwrap();
+        assert_eq!(
+            last_event.1,
+            (events::module_registered(&env),).into_val(&env)
+        );
+
+        client.unregister_module(&module);
+        let events = env.events().all();
+        let last_event = events.last().unwrap();
+        assert_eq!(
+            last_event.1,
+            (events::module_unregistered(&env),).into_val(&env)
+        );
+    }
 }
+

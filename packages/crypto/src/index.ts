@@ -62,4 +62,4 @@ export { signPayload, signTransaction, verifySignature } from './signing';
 
 // Constant-time comparison
 export { timingSafeEqual } from './timing-safe';
-export { constantTimeEqual } from './compare';
+

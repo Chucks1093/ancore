@@ -31,7 +31,6 @@ const EXPECTED_EXPORTS = [
   'signTransaction',
   'verifySignature',
   'timingSafeEqual',
-  'constantTimeEqual',
 ] as const;
 
 describe('@ancore/crypto smoke test', () => {
