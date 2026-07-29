@@ -3,10 +3,9 @@ import { trace } from '@opentelemetry/api';
 import { validateTransferPolicy } from '@ancore/types';
 import { getSessionKey } from '@ancore/account-abstraction';
 import { rpc, Networks } from '@stellar/stellar-sdk';
-import * as ed from '@noble/ed25519';
 import type { JobQueue } from '../queue/JobQueue';
 import type { IdempotencyStore } from '../store/idempotency';
-import { NonceStore } from '../store/nonceStore';
+import type { NonceStore } from '../store/nonceStore';
 import type {
   RelayServiceContract,
   SignatureServiceContract,
@@ -19,6 +18,7 @@ import type {
   DependencyStatus,
   RelayError,
 } from '../types';
+import { RelayErrorCodes } from '../types';
 import { mapSimulationError } from './mapSimulationError';
 import { mapSubmissionError } from './mapSubmissionError';
 
@@ -67,12 +67,18 @@ export class RelayService implements RelayServiceContract {
       try {
         const keyError = this.validateSessionKey(request.sessionKey);
         if (keyError) {
-          const error: RelayError = { code: 'INVALID_SIGNATURE', message: keyError };
+          const error: RelayError = {
+            code: RelayErrorCodes.INVALID_SIGNATURE,
+            message: keyError,
+          };
           return { valid: false, error };
         }
 
         if (request.nonce < 0) {
-          const error: RelayError = { code: 'NONCE_REPLAY', message: 'Nonce must be non-negative' };
+          const error: RelayError = {
+            code: RelayErrorCodes.NONCE_REPLAY,
+            message: 'Nonce must be non-negative',
+          };
           return { valid: false, error };
         }
 
@@ -81,7 +87,7 @@ export class RelayService implements RelayServiceContract {
             await this.nonceStore.assertFresh(request.sessionKey, request.nonce);
           } catch (err) {
             const message = err instanceof Error ? err.message : 'Nonce already used';
-            const error: RelayError = { code: 'NONCE_REPLAY', message };
+            const error: RelayError = { code: RelayErrorCodes.NONCE_REPLAY, message };
             return { valid: false, error };
           }
         }
@@ -91,29 +97,35 @@ export class RelayService implements RelayServiceContract {
         try {
           const targetContract = request.parameters.accountAddress as string;
           const onChainKey = await getSessionKey(targetContract, request.sessionKey, {
-            server: new rpc.Server(process.env.RPC_URL || 'https://soroban-testnet.stellar.org') as any,
+            server: new rpc.Server(
+              process.env.RPC_URL || 'https://soroban-testnet.stellar.org'
+            ) as any,
             sourceAccount: targetContract,
             networkPassphrase: process.env.NETWORK_PASSPHRASE || Networks.TESTNET,
           });
           if (!onChainKey) {
             return {
               valid: false,
-              error: { code: 'INVALID_SIGNATURE', message: 'Session key not found on chain' },
+              error: {
+                code: RelayErrorCodes.INVALID_SIGNATURE,
+                message: 'Session key not found on chain',
+              },
             };
           }
         } catch (e: unknown) {
           // ignore or handle error if contract query fails
         }
 
-        const ok = await ed.verify(
-          Buffer.from(request.signature, 'hex'),
-          Buffer.from(payload, 'hex'),
-          request.sessionKey
-        );
+        // Prefer injected SignatureServiceContract so tests and production share one path.
+        // (Avoid direct @noble/ed25519 ESM import in this service — Jest + package dualism.)
+        const ok = this.signatureService.verify(request.sessionKey, payload, request.signature);
         if (!ok) {
           return {
             valid: false,
-            error: { code: 'INVALID_SIGNATURE', message: 'Signature verification failed' },
+            error: {
+              code: RelayErrorCodes.INVALID_SIGNATURE,
+              message: 'Signature verification failed',
+            },
           };
         }
 
@@ -123,7 +135,7 @@ export class RelayService implements RelayServiceContract {
           if (policyResult.action === 'block') {
             return {
               valid: false,
-              error: { code: 'TRANSFER_LIMIT_EXCEEDED', message: policyResult.message },
+              error: { code: RelayErrorCodes.POLICY_DENIED, message: policyResult.message },
             };
           }
         }
@@ -153,7 +165,7 @@ export class RelayService implements RelayServiceContract {
       return {
         success: false,
         error: {
-          code: 'INTERNAL_ERROR',
+          code: RelayErrorCodes.INTERNAL_ERROR,
           message: 'Transaction submitter is not configured',
         },
         gasUsed: 0,
@@ -165,7 +177,7 @@ export class RelayService implements RelayServiceContract {
       return {
         success: false,
         error: {
-          code: 'INTERNAL_ERROR',
+          code: RelayErrorCodes.INTERNAL_ERROR,
           message: `Missing required parameter: ${SIGNED_TX_PARAMETER}`,
         },
         gasUsed: 0,

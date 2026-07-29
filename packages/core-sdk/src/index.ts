@@ -16,6 +16,13 @@ export {
   type WalletMaterial,
 } from './wallet';
 
+// Create wallet orchestration (standalone + exposed via AncoreClient.createWallet)
+export {
+  createWallet as createWalletOrchestration,
+  type CreateWalletParams,
+  type CreateWalletResult,
+} from './create-wallet';
+
 // Client
 export { AncoreClient, type AncoreClientOptions } from './ancore-client';
 
@@ -130,6 +137,7 @@ export {
   defaultScheduleStartAt,
   SCHEDULE_FREQUENCY_OPTIONS,
   DEMO_ACCOUNT_ADDRESS,
+  ConfigError,
   type SchedulerClient,
   type SchedulerClientOptions,
 } from './scheduler-client';

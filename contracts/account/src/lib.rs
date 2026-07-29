@@ -5,14 +5,17 @@
 //!
 //! Core smart account contract implementing account abstraction for Stellar/Soroban.
 //!
-//! ## Security
-//! This contract is security-critical and must be audited before mainnet deployment.
+//! ## Security Warning
+//! **UNAUDITED & TESTNET-ONLY**
+//! This contract is in active development and has not been audited. It is intended for 
+//! testnet use only. Do not use in production or with real funds.
 //!
 //! ## Features
-//! - Signature validation
-//! - Session key support
+//! - Signature validation (Single Signer Ed25519)
+//! - Session key support (Scoped permissions, limits)
 //! - Upgradeable via proxy pattern
-//! - Multi-signature support
+//! - Multi-signature support (Planned - See #990)
+//! - Passkey support (Planned - See #971)
 //!
 //! ## Events
 //! This contract emits events for all state-changing operations to enable off-chain tracking:
@@ -396,7 +399,11 @@ impl AncoreAccount {
             return Err(ContractError::InvalidExpiration);
         }
 
-        Self::validate_spend_policy(&max_amount_per_call, &cumulative_limit, spend_window_seconds)?;
+        Self::validate_spend_policy(
+            &max_amount_per_call,
+            &cumulative_limit,
+            spend_window_seconds,
+        )?;
 
         let owner = Self::get_owner(env.clone())?;
         owner.require_auth();
@@ -855,7 +862,11 @@ impl AncoreAccount {
 
         if let Some(_cumulative_limit) = session.cumulative_limit {
             let now = env.ledger().timestamp();
-            if now > session.spend_window_start.saturating_add(session.spend_window_seconds) {
+            if now
+                > session
+                    .spend_window_start
+                    .saturating_add(session.spend_window_seconds)
+            {
                 session.spend_window_start = now;
                 session.spent_in_window = 0;
             }
@@ -974,7 +985,15 @@ mod test {
         let expires_at = 1000u64;
         let permissions = Vec::new(&env);
 
-        client.add_session_key(&session_pk, &expires_at, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
 
         let session_key = client.get_session_key(&session_pk);
         assert!(session_key.is_some());
@@ -995,7 +1014,15 @@ mod test {
         let expires_at = 1000u64;
         let permissions = Vec::new(&env);
 
-        client.add_session_key(&session_pk, &expires_at, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
 
         let events_list = env.events().all();
         assert!(events_list.len() >= 2);
@@ -1029,7 +1056,15 @@ mod test {
         // Before adding: should be false
         assert!(!client.has_session_key(&session_pk));
 
-        client.add_session_key(&session_pk, &expires_at, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
 
         // After adding: should be true
         assert!(client.has_session_key(&session_pk));
@@ -1065,7 +1100,15 @@ mod test {
         let expires_at = 1000u64;
         let permissions = Vec::new(&env);
 
-        client.add_session_key(&session_pk, &expires_at, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
         assert!(client.has_session_key(&session_pk));
 
         client.revoke_session_key(&session_pk);
@@ -1087,7 +1130,15 @@ mod test {
         let expires_at = 1000u64;
         let permissions = Vec::new(&env);
 
-        client.add_session_key(&session_pk, &expires_at, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
         assert!(client.get_session_key(&session_pk).is_some());
 
         client.revoke_session_key(&session_pk);
@@ -1109,7 +1160,15 @@ mod test {
         let expires_at = 1000u64;
         let permissions = Vec::new(&env);
 
-        client.add_session_key(&session_pk, &expires_at, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
         client.revoke_session_key(&session_pk);
 
         let events_list = env.events().all();
@@ -1258,7 +1317,15 @@ mod test {
         let expires_at = env.ledger().timestamp() + 10000;
         let permissions = Vec::new(&env);
 
-        client.add_session_key(&session_pk, &expires_at, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
         client.refresh_session_key_ttl(&session_pk);
 
         let session_key = client.get_session_key(&session_pk);
@@ -1339,7 +1406,15 @@ mod test {
         let mut permissions = Vec::new(&env);
         permissions.push_back(PERMISSION_EXECUTE);
 
-        client.add_session_key(&session_pk, &expires_at, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
 
         let callee_id = env.register_contract(None, AncoreAccount);
         let function = soroban_sdk::symbol_short!("get_nonce");
@@ -1381,7 +1456,15 @@ mod test {
         let mut permissions = Vec::new(&env);
         permissions.push_back(PERMISSION_EXECUTE);
 
-        client.add_session_key(&session_pk, &expires_at, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
 
         env.ledger().set_timestamp(expires_at + 1);
 
@@ -1520,7 +1603,15 @@ mod test {
         let expires_at = env.ledger().timestamp() + 10_000;
         let mut permissions = Vec::new(&env);
         permissions.push_back(PERMISSION_EXECUTE);
-        client.add_session_key(&session_pk, &expires_at, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
 
         let callee_id = env.register_contract(None, AncoreAccount);
         let function = soroban_sdk::symbol_short!("get_nonce");
@@ -1643,7 +1734,15 @@ mod test {
         let mut permissions = Vec::new(&env);
         permissions.push_back(3);
 
-        let result = client.try_add_session_key(&session_pk, &expires_at, &permissions, &None, &None, &None, &0u64);
+        let result = client.try_add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
         assert_eq!(result, Err(Ok(ContractError::InsufficientPermission)));
     }
 
@@ -1665,7 +1764,15 @@ mod test {
         permissions.push_back(1);
         permissions.push_back(1);
 
-        let result = client.try_add_session_key(&session_pk, &expires_at, &permissions, &None, &None, &None, &0u64);
+        let result = client.try_add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
         assert_eq!(result, Err(Ok(ContractError::InsufficientPermission)));
     }
 
@@ -1686,7 +1793,15 @@ mod test {
         permissions.push_back(PERMISSION_EXECUTE);
 
         // allowed_contracts = None means unrestricted
-        client.add_session_key(&session_pk, &expires_at, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
 
         let key = client.get_session_key(&session_pk).unwrap();
         assert!(key.allowed_contracts.is_none());
@@ -1712,7 +1827,15 @@ mod test {
         let mut allowlist = Vec::new(&env);
         allowlist.push_back(allowed_addr.clone());
 
-        client.add_session_key(&session_pk, &expires_at, &permissions, &Some(allowlist), &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &Some(allowlist),
+            &None,
+            &None,
+            &0u64,
+        );
 
         let key = client.get_session_key(&session_pk).unwrap();
         assert!(key.allowed_contracts.is_some());
@@ -1737,7 +1860,15 @@ mod test {
         let mut permissions = Vec::new(&env);
         permissions.push_back(PERMISSION_EXECUTE);
 
-        client.add_session_key(&session_pk, &expires_at, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &expires_at,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
 
         // Update allowlist post-creation
         let new_addr = Address::generate(&env);
@@ -1828,7 +1959,15 @@ mod test {
         let permissions = Vec::new(&env);
 
         // add → assert present
-        client.add_session_key(&session_pk, &9999u64, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &9999u64,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
         assert!(client.has_session_key(&session_pk));
 
         // revoke → assert absent
@@ -1836,7 +1975,15 @@ mod test {
         assert!(!client.has_session_key(&session_pk));
 
         // re-add same key → assert present again with new expiry
-        client.add_session_key(&session_pk, &19999u64, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &19999u64,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
         assert!(client.has_session_key(&session_pk));
 
         let sk = client.get_session_key(&session_pk).unwrap();
@@ -1856,9 +2003,25 @@ mod test {
         let session_pk = BytesN::from_array(&env, &[11u8; 32]);
         let permissions = Vec::new(&env);
 
-        client.add_session_key(&session_pk, &500u64, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &500u64,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
         client.revoke_session_key(&session_pk);
-        client.add_session_key(&session_pk, &888u64, &permissions, &None, &None, &None, &0u64);
+        client.add_session_key(
+            &session_pk,
+            &888u64,
+            &permissions,
+            &None,
+            &None,
+            &None,
+            &0u64,
+        );
 
         let sk = client.get_session_key(&session_pk).unwrap();
         assert_eq!(sk.expires_at, 888u64, "re-added key must carry new expiry");
@@ -1949,10 +2112,7 @@ mod test {
             &Some(payload),
         );
 
-        assert!(matches!(
-            result,
-            Err(Ok(ContractError::ExceededSpendLimit))
-        ));
+        assert!(matches!(result, Err(Ok(ContractError::ExceededSpendLimit))));
         assert_eq!(client.get_nonce(), 0);
     }
 
@@ -2003,10 +2163,7 @@ mod test {
             &Some(payload),
         );
 
-        assert!(matches!(
-            result,
-            Err(Ok(ContractError::ExceededSpendLimit))
-        ));
+        assert!(matches!(result, Err(Ok(ContractError::ExceededSpendLimit))));
         assert_eq!(client.get_nonce(), 0);
     }
 }

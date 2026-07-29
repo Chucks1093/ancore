@@ -6,13 +6,26 @@
       "name": "My Ancore Wallet",
       "address": "GBXXX...YYYY"
     },
+    "accountQr": {
+      "label": "Address QR Code",
+      "description": "Download a shareable QR of your public address",
+      "title": "Address QR",
+      "downloadPng": "Download PNG",
+      "downloading": "Preparing…",
+      "downloadFailed": "Could not generate the QR image. Try again.",
+      "copyAddress": "Copy address",
+      "unavailable": "No account address yet. Complete onboarding to get one.",
+      "safetyTitle": "Public address only",
+      "safetyBody": "This QR contains only your public receive address. Your private key and recovery phrase are never exported here."
+    },
     "groups": {
       "network": "Network",
       "display": "Display",
       "security": "Security",
       "privacy": "Privacy",
       "about": "About",
-      "notificationsDemo": "Notifications (Demo)"
+      "notificationsDemo": "Notifications (Demo)",
+      "account": "Account"
     },
     "network": {
       "label": "Network",
@@ -68,6 +81,29 @@
         "label": "Export Recovery Phrase",
         "description": "Reveal your 12-word mnemonic"
       }
+    },
+    "hardware": {
+      "label": "Hardware wallet",
+      "menuDescription": "Pair a Ledger and prefer on-device signing",
+      "title": "Hardware wallet",
+      "description": "Approve classic and owner-key operations on a Ledger so the seed never leaves the device. Session-key AA signing stays in the software vault.",
+      "webhidUnsupported": "WebHID is not available in this browser. Use Chrome or Edge with the unpacked extension build.",
+      "signerPreference": "Signer preference",
+      "software": "Software vault",
+      "ledger": "Ledger",
+      "ledgerActive": "Ledger",
+      "ownerOpsOnly": "Ledger signs owner / G-address ops only. Session keys continue to use the software vault.",
+      "accountIndex": "BIP-44 account index",
+      "pathHint": "Derivation path {{path}}",
+      "connect": "Connect Ledger",
+      "confirmOnDevice": "Confirm on your Ledger device…",
+      "paired": "Device paired",
+      "pairedDevice": "Paired device",
+      "address": "Address",
+      "path": "Path",
+      "appVersion": "App version",
+      "disconnect": "Forget device",
+      "invalidIndex": "Account index must be a non-negative integer"
     },
     "privacy": {
       "telemetry": {
