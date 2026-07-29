@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { ReadOnlyAccountView } from '../accounts';
+import { useAppGate } from '../config/hooks/useAppGate';
 import { MobileWalletShell } from '../navigation';
+import { ForceUpdateScreen } from '../screens/gate/ForceUpdateScreen';
+import { MaintenanceScreen } from '../screens/gate/MaintenanceScreen';
 import { bootstrapMobileWallet } from './bootstrap';
 import { isDeviceCompromised } from '../security/jailbreak';
 import { JailbreakWarningScreen } from '../screens/JailbreakWarningScreen';
@@ -11,24 +14,36 @@ interface Props {
 
 export const MobileWalletApp = ({ env }: Props) => {
   const bootstrap = bootstrapMobileWallet(env);
-  const [blocked, setBlocked] = useState(false);
+  const gate = useAppGate({
+    configUrl: bootstrap.environment.remoteConfigUrl,
+    appVersion: bootstrap.environment.appVersion,
+    bypass: bootstrap.environment.remoteConfigBypass,
+  });
 
-  useEffect(() => {
-    if (isDeviceCompromised()) {
-      setBlocked(true);
-    }
-  }, []);
+  if (gate.isLoading) {
+    return <p aria-live="polite">Loading…</p>;
+  }
 
-  if (blocked) {
-    // eslint-disable-next-line no-undef
-    const IS_DEV = typeof __DEV__ !== 'undefined' ? __DEV__ : false;
+  if (gate.result.status === 'maintenance') {
+    return <MaintenanceScreen message={gate.result.message} />;
+  }
+
+  if (gate.result.status === 'force-update') {
     return (
-      <JailbreakWarningScreen onContinueAnyway={IS_DEV ? () => setBlocked(false) : undefined} />
+      <ForceUpdateScreen
+        minimumAppVersion={gate.result.minimumAppVersion}
+        currentVersion={bootstrap.environment.appVersion}
+        updateUrl={gate.result.updateUrl}
+      />
     );
   }
 
   return (
-    <MobileWalletShell appName={bootstrap.environment.appName} activeRoute="account">
+    <MobileWalletShell 
+      appName={bootstrap.environment.appName} 
+      activeRoute="account"
+      network={bootstrap.environment.network}
+    >
       <ReadOnlyAccountView
         account={bootstrap.account}
         accountContractId={bootstrap.sdk.accountContractId}
