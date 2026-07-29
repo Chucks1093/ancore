@@ -18,7 +18,8 @@
     "test": "jest --config ./jest.config.cjs --coverage --runInBand",
     "lint": "eslint src/",
     "clean": "rm -rf dist coverage",
-    "test:ci": "pnpm run build && pnpm run test"
+    "test:ci": "pnpm run build && pnpm run test",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ancore/core-sdk": "workspace:*",
