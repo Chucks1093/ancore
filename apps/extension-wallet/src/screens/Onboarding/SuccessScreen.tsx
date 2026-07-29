@@ -1,35 +1,12 @@
 import * as React from 'react';
 import { Copy, Check, ExternalLink, Wallet, Sparkles, Shield, Zap } from 'lucide-react';
+import { useCopyWithFeedback } from '@/hooks/useCopyWithFeedback';
+import { truncateAddress } from '@/utils/address';
 
 /**
  * SuccessScreen props
  */
 export interface SuccessScreenProps {
-  publicKey: string;
-  contractId?: string;
-  onComplete: () => void;
-}
-
-/**
- * Truncate address for display
- */
-function truncateAddress(address: string, chars = 6): string {
-  if (address.length <= chars * 2 + 3) return address;
-  return `${address.slice(0, chars)}...${address.slice(-chars)}`;
-}
-
-/**
- * Copy address to clipboard
- */
-async function copyToClipboard(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch (err) {
-    console.error('Failed to copy:', err);
-    return false;
-  }
-}
 
 /**
  * SuccessScreen - Shows successful account creation
@@ -38,25 +15,17 @@ async function copyToClipboard(text: string): Promise<boolean> {
  * options to copy addresses and access the wallet.
  */
 export function SuccessScreen({ publicKey, contractId, onComplete }: SuccessScreenProps) {
-  const [copiedPublicKey, setCopiedPublicKey] = React.useState(false);
-  const [copiedContractId, setCopiedContractId] = React.useState(false);
+  const { copy, copied: copiedPublicKey } = useCopyWithFeedback();
+  const { copy: copyContract, copied: copiedContractId } = useCopyWithFeedback();
 
   const handleCopyPublicKey = React.useCallback(async () => {
-    const success = await copyToClipboard(publicKey);
-    if (success) {
-      setCopiedPublicKey(true);
-      setTimeout(() => setCopiedPublicKey(false), 2000);
-    }
-  }, [publicKey]);
+    await copy(publicKey);
+  }, [publicKey, copy]);
 
   const handleCopyContractId = React.useCallback(async () => {
     if (!contractId) return;
-    const success = await copyToClipboard(contractId);
-    if (success) {
-      setCopiedContractId(true);
-      setTimeout(() => setCopiedContractId(false), 2000);
-    }
-  }, [contractId]);
+    await copyContract(contractId);
+  }, [contractId, copyContract]);
 
   const openExplorer = React.useCallback(() => {
     const url = `https://stellar.expert/explorer/testnet/account/${publicKey}`;

@@ -8,6 +8,7 @@ import {
 import { openMockApproval } from './approval-window';
 import { resolveRequest, rejectRequest } from './handlers/external/response-queue';
 import type { ExternalApiRequest, ExternalApiMethodName } from '@ancore/types';
+import { createLogger } from './logger';
 
 type ChromeRuntimeManifest = {
   name: string;
@@ -58,7 +59,7 @@ declare const chrome: {
   };
 };
 
-const logPrefix = '[ancore-extension/background]';
+const log = createLogger('[ancore-extension/background]');
 
 const runtime = (globalThis as { chrome?: { runtime?: typeof chrome.runtime } }).chrome?.runtime;
 const manifest = (runtime?.getManifest?.() as ChromeRuntimeManifest | undefined) ?? {
@@ -66,25 +67,25 @@ const manifest = (runtime?.getManifest?.() as ChromeRuntimeManifest | undefined)
   version: '0.0.0',
 };
 
-console.info(`${logPrefix} booted`, {
+log.info('booted', {
   name: manifest.name,
   version: manifest.version,
 });
 
 void restoreUnlockSessionFromStorage().then((restored) => {
   if (restored) {
-    console.info(`${logPrefix} unlock session restored from chrome.storage.session`);
+    log.info('unlock session restored from chrome.storage.session');
   }
 });
 
 runtime?.onInstalled?.addListener((details: ChromeInstalledDetails) => {
-  console.info(`${logPrefix} installed`, { reason: details.reason });
+  log.info('installed', { reason: details.reason });
 });
 
 runtime?.onStartup?.addListener(() => {
-  console.info(`${logPrefix} startup`);
+  log.info('startup');
   void probeServicesOnStartup().catch((err) => {
-    console.warn(`${logPrefix} health probe failed on startup`, err);
+    log.warn('health probe failed on startup', err);
   });
 });
 
@@ -97,7 +98,7 @@ storage?.onChanged?.addListener((changes, areaName) => {
 
     // Check if network changed
     if (newSettings?.network !== oldSettings?.network) {
-      console.info(`${logPrefix} network changed`, {
+      log.info('network changed', {
         from: oldSettings?.network,
         to: newSettings?.network,
       });
