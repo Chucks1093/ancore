@@ -14,6 +14,48 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Detect Changed Paths
+    runs-on: ubuntu-latest
+    outputs:
+      contracts: ${{ steps.filter.outputs.contracts }}
+      apps: ${{ steps.filter.outputs.apps }}
+      services: ${{ steps.filter.outputs.services }}
+      packages: ${{ steps.filter.outputs.packages }}
+      indexer: ${{ steps.filter.outputs.indexer }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            contracts:
+              - 'contracts/**'
+              - 'scripts/check-wasm-size.js'
+              - '.github/workflows/ci.yml'
+            apps:
+              - 'apps/**'
+              - 'packages/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+              - '.github/workflows/ci.yml'
+            services:
+              - 'services/**'
+              - 'packages/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - '.github/workflows/ci.yml'
+            packages:
+              - 'packages/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'turbo.json'
+              - '.github/workflows/ci.yml'
+            indexer:
+              - 'services/indexer/**'
+              - '.github/workflows/ci.yml'
+
   audit:
     name: Dependency Audit
     runs-on: ubuntu-latest
@@ -57,6 +99,8 @@ jobs:
   lint-translations:
     name: Extension Translation Lint
     runs-on: ubuntu-latest
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.apps == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -77,6 +121,8 @@ jobs:
   package:
     name: Package — ${{ matrix.name }}
     runs-on: ubuntu-latest
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.packages == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -120,6 +166,8 @@ jobs:
   app:
     name: App — ${{ matrix.name }}
     runs-on: ubuntu-latest
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.apps == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -153,6 +201,8 @@ jobs:
   services:
     name: Services — Lint & Test
     runs-on: ubuntu-latest
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.services == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -182,6 +232,8 @@ jobs:
   contracts:
     name: Contracts — Build & Test
     runs-on: ubuntu-latest
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.contracts == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -236,6 +288,8 @@ jobs:
   indexer-migrations:
     name: Indexer — Migration Check
     runs-on: ubuntu-latest
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.indexer == 'true'
     services:
       postgres:
         image: postgres:16
@@ -261,6 +315,8 @@ jobs:
   indexer:
     name: Indexer — Build & Test
     runs-on: ubuntu-latest
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.indexer == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -305,3 +361,19 @@ jobs:
       - name: Run tests
         working-directory: ./services/indexer
         run: cargo test
+
+  ci-status:
+    name: CI Required Checks Status
+    runs-on: ubuntu-latest
+    needs: [audit, format, lint-translations, package, app, services, contracts, indexer-migrations, indexer]
+    if: always()
+    steps:
+      - name: Verify all executed jobs passed
+        run: |
+          results="${{ join(needs.*.result, ' ') }}"
+          echo "Job results: $results"
+          if echo "$results" | grep -qE "failure|cancelled"; then
+            echo "Error: One or more CI jobs failed or were cancelled."
+            exit 1
+          fi
+          echo "All CI jobs passed or were skipped."
