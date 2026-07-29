@@ -33,9 +33,10 @@
     "indexer:check": "cd services/indexer && cargo check",
     "indexer:lint-migrations": "node services/indexer/scripts/lint-migrations.mjs",
     "audit:security": "node tools/security-audit.js",
+    "check:install-scripts": "node scripts/check-install-scripts.js",
     "docs:validate-links": "node scripts/validate-doc-links.js",
     "docs:lint-openapi": "npx --yes @stoplight/spectral-cli lint --fail-severity=warn services/indexer/openapi.yaml",
-    "verify": "pnpm lint && pnpm typecheck && pnpm test",
+    "verify": "pnpm check:install-scripts && pnpm lint && pnpm typecheck && pnpm test",
     "prepare": "husky",
     "docs:check-structure": "node scripts/check-docs-repo-structure.mjs",
     "verify:theme-tokens": "node scripts/verify-theme-tokens.ts"
@@ -99,6 +100,10 @@
     ]
   },
   "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "protobufjs"
+    ],
     "overrides": {
       "js-yaml": ">=4.3.0",
       "tmp": ">=0.2.4",
