@@ -251,13 +251,13 @@ same derived key. Multi-account support requires #872.
 `sign()` does not catch or translate errors — callers must handle whatever
 `@ledgerhq/hw-transport-webhid` / `@ledgerhq/hw-app-str` throw:
 
-| Cause                                      | What happens                                                   |
-| ------------------------------------------ | ---------------------------------------------------------------- |
-| No Ledger device connected                 | `TransportWebHID.create()` rejects (device picker cancelled/empty) |
+| Cause                                      | What happens                                                                      |
+| ------------------------------------------ | --------------------------------------------------------------------------------- |
+| No Ledger device connected                 | `TransportWebHID.create()` rejects (device picker cancelled/empty)                |
 | Stellar app not open on the device         | `signTransaction` rejects with a `TransportStatusError` (wrong app/locked device) |
-| User rejects the signing request on-device | `signTransaction` rejects with a status-`0x6985` `TransportStatusError` |
-| Browser lacks WebHID support               | `TransportWebHID.create()` throws — see feature detection below |
-| Transaction too large / unsupported opcode | `signTransaction` rejects with a parsing error from the Stellar app |
+| User rejects the signing request on-device | `signTransaction` rejects with a status-`0x6985` `TransportStatusError`           |
+| Browser lacks WebHID support               | `TransportWebHID.create()` throws — see feature detection below                   |
+| Transaction too large / unsupported opcode | `signTransaction` rejects with a parsing error from the Stellar app               |
 
 None of these are wrapped in Ancore-specific error types today; catch and
 map them at the call site.

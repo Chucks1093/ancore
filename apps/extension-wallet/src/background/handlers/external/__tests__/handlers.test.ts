@@ -107,14 +107,23 @@ describe('handleRequestAccess', () => {
     const { openApprovalWindow } = await import('../../../approval-window');
 
     vi.mocked(isAllowed).mockResolvedValueOnce(false);
-    vi.mocked(registerResponseCallbacks).mockImplementation((_requestId, resolve) => resolve({ ok: true }));
+    vi.mocked(registerResponseCallbacks).mockImplementation((_requestId, resolve) =>
+      resolve({ ok: true })
+    );
 
     const result = await handleRequestAccess(makeCtx('https://dapp.example'));
 
     expect(enqueueApproval).toHaveBeenCalled();
     expect(openApprovalWindow).toHaveBeenCalledWith('test-req-id', 'grant-access');
-    expect(addToAllowlist).toHaveBeenCalledWith('testnet', 'CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 'https://dapp.example');
-    expect(result).toEqual({ smartAccountId: 'CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', network: 'testnet' });
+    expect(addToAllowlist).toHaveBeenCalledWith(
+      'testnet',
+      'CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      'https://dapp.example'
+    );
+    expect(result).toEqual({
+      smartAccountId: 'CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+      network: 'testnet',
+    });
   });
 
   it('does not add the origin to the allowlist when the user rejects access', async () => {
@@ -122,9 +131,13 @@ describe('handleRequestAccess', () => {
     const { registerResponseCallbacks } = await import('../response-queue');
 
     vi.mocked(isAllowed).mockResolvedValueOnce(false);
-    vi.mocked(registerResponseCallbacks).mockImplementation((_requestId, _resolve, reject) => reject(new Error('User rejected')));
+    vi.mocked(registerResponseCallbacks).mockImplementation((_requestId, _resolve, reject) =>
+      reject(new Error('User rejected'))
+    );
 
-    await expect(handleRequestAccess(makeCtx('https://dapp.example'))).rejects.toThrow('User rejected');
+    await expect(handleRequestAccess(makeCtx('https://dapp.example'))).rejects.toThrow(
+      'User rejected'
+    );
     expect(addToAllowlist).not.toHaveBeenCalled();
   });
 });
