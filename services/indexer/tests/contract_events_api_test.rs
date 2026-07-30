@@ -275,7 +275,7 @@ async fn integration_test_cursor_pagination() {
     let next_cursor = json["pagination"]["next_cursor"].as_str().unwrap();
 
     // Second page
-    response = app
+    let response = app
         .oneshot(
             Request::builder()
                 .uri(format!(
