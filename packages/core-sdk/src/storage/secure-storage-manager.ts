@@ -46,7 +46,36 @@ function isLegacyStorageAdapter(
   return typeof (storage as StorageAdapter).remove === 'function';
 }
 
-function normalizeStorageAdapter(
+/**
+ * Parse only JSON object/array containers. Never coerce JSON scalars
+ * (`true`, `null`, `1e3`, …) — those must remain plain strings so
+ * round-trips stay byte-identical. Inferring JSON-ness from bare
+ * `JSON.parse` success is unsafe.
+ */
+export function tryParseStructuredJson(value: string): object | undefined {
+  const first = value.trimStart()[0];
+  if (first !== '{' && first !== '[') {
+    return undefined;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (parsed !== null && typeof parsed === 'object') {
+      return parsed;
+    }
+  } catch {
+    // Invalid JSON — keep the original string.
+  }
+
+  return undefined;
+}
+
+/**
+ * Bridge a legacy `StorageAdapter` (typed `unknown` values) to the
+ * string-only `PlatformStorageAdapter` surface used by SecureStorageManager.
+ * Structured JSON is stored as native objects; everything else as strings.
+ */
+export function normalizeStorageAdapter(
   storage: PlatformStorageAdapter | StorageAdapter
 ): PlatformStorageAdapter {
   if (!isLegacyStorageAdapter(storage)) {
@@ -62,11 +91,8 @@ function normalizeStorageAdapter(
       return typeof value === 'string' ? value : JSON.stringify(value);
     },
     set: async (key, value) => {
-      try {
-        await storage.set(key, JSON.parse(value));
-      } catch {
-        await storage.set(key, value);
-      }
+      const structured = tryParseStructuredJson(value);
+      await storage.set(key, structured !== undefined ? structured : value);
     },
     delete: (key) => storage.remove(key),
   };
