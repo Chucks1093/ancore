@@ -11,7 +11,11 @@ describe('relayer server startup guard', () => {
       throw new Error(`process.exit:${code ?? 'undefined'}`);
     }) as unknown as typeof process.exit;
 
-    process.env = { ...originalEnv, NODE_ENV: 'production', RELAYER_AUTH_SECRET: '' } as NodeJS.ProcessEnv;
+    process.env = {
+      ...originalEnv,
+      NODE_ENV: 'production',
+      RELAYER_AUTH_SECRET: '',
+    } as NodeJS.ProcessEnv;
     process.exit = exitSpy;
 
     try {

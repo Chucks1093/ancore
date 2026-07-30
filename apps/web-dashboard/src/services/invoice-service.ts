@@ -48,7 +48,10 @@ export async function openInvoice(invoiceId: string): Promise<OpenInvoiceResult>
   return _client.open(invoiceId);
 }
 
-export async function payInvoice(invoiceId: string, paymentTxHash: string): Promise<PayInvoiceResult> {
+export async function payInvoice(
+  invoiceId: string,
+  paymentTxHash: string
+): Promise<PayInvoiceResult> {
   return _client.pay({ invoiceId, paymentTxHash });
 }
 
