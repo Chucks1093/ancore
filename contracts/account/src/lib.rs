@@ -7,7 +7,7 @@
 //!
 //! ## Security Warning
 //! **UNAUDITED & TESTNET-ONLY**
-//! This contract is in active development and has not been audited. It is intended for 
+//! This contract is in active development and has not been audited. It is intended for
 //! testnet use only. Do not use in production or with real funds.
 //!
 //! ## Features
@@ -395,8 +395,9 @@ impl AncoreAccount {
         );
 
         // Call each registered validation module before executing the operation.
-        // Modules expose `validate(to, function, args) -> Result<(), u32>`.
-        // Any module returning an error aborts execution with InsufficientPermission.
+        // Modules expose `validate(to, function, args) -> Result<(), ContractError>`.
+        // Returning `Ok(())` approves the operation. Returning `Err(_)` or panicking
+        // rejects the operation and keeps execute() fail-closed.
         let modules: Vec<Address> = env
             .storage()
             .instance()
@@ -408,10 +409,12 @@ impl AncoreAccount {
             let mut module_args: Vec<Val> = Vec::new(&env);
             module_args.push_back(to.clone().to_val());
             module_args.push_back(function.clone().to_val());
-            for arg in args.iter() {
-                module_args.push_back(arg);
+            module_args.push_back(args.clone().to_val());
+            let validation_result: Result<(), ContractError> =
+                env.invoke_contract(&module, &validate_fn, module_args);
+            if validation_result.is_err() {
+                return Err(ContractError::InsufficientPermission);
             }
-            let _: Val = env.invoke_contract(&module, &validate_fn, module_args);
         }
 
         let result: Val = env.invoke_contract(&to, &function, args.clone());
@@ -574,8 +577,9 @@ impl AncoreAccount {
     /// Register a validation module (owner only).
     ///
     /// The module must expose a `validate` function with signature
-    /// `fn validate(to: Address, function: Symbol, args: Vec<Val>) -> Result<(), u32>`.
-    /// It is called before each `execute()` invocation.
+    /// `fn validate(to: Address, function: Symbol, args: Vec<Val>) -> Result<(), ContractError>`.
+    /// It is called before each `execute()` invocation. Returning `Ok(())` approves
+    /// the operation; returning `Err(_)` rejects it with `InsufficientPermission`.
     pub fn register_module(env: Env, module: Address) -> Result<(), ContractError> {
         let owner = Self::get_owner(env.clone())?;
         owner.require_auth();
@@ -722,7 +726,11 @@ impl AncoreAccount {
     /// Add an owner (requires quorum of existing owners).
     /// Multi-owner mode must already be initialized via `initialize_multi_owner`.
     /// The new owner is added immediately; threshold is not auto-adjusted.
-    pub fn add_owner(env: Env, signers: Vec<Address>, new_owner: Address) -> Result<(), ContractError> {
+    pub fn add_owner(
+        env: Env,
+        signers: Vec<Address>,
+        new_owner: Address,
+    ) -> Result<(), ContractError> {
         let mut owners: Vec<Address> = env
             .storage()
             .instance()
@@ -757,7 +765,11 @@ impl AncoreAccount {
     /// Remove an owner (requires quorum of existing owners).
     /// Multi-owner mode must already be initialized via `initialize_multi_owner`.
     /// Cannot remove the last owner. Threshold is auto-adjusted if it exceeds new count.
-    pub fn remove_owner(env: Env, signers: Vec<Address>, owner_to_remove: Address) -> Result<(), ContractError> {
+    pub fn remove_owner(
+        env: Env,
+        signers: Vec<Address>,
+        owner_to_remove: Address,
+    ) -> Result<(), ContractError> {
         let owners: Vec<Address> = env
             .storage()
             .instance()
@@ -811,7 +823,11 @@ impl AncoreAccount {
     /// Set the threshold (requires quorum of existing owners).
     /// Multi-owner mode must already be initialized via `initialize_multi_owner`.
     /// Threshold must be > 0 and <= number of owners.
-    pub fn set_threshold(env: Env, signers: Vec<Address>, new_threshold: u32) -> Result<(), ContractError> {
+    pub fn set_threshold(
+        env: Env,
+        signers: Vec<Address>,
+        new_threshold: u32,
+    ) -> Result<(), ContractError> {
         let owners: Vec<Address> = env
             .storage()
             .instance()
@@ -1167,6 +1183,44 @@ mod test {
     fn init(env: &Env, client: &AncoreAccountClient, owner: &Address) {
         env.mock_all_auths();
         client.initialize(owner);
+    }
+
+    mod approving_validation_module {
+        use super::*;
+
+        #[contract]
+        pub struct Module;
+
+        #[contractimpl]
+        impl Module {
+            pub fn validate(
+                _env: Env,
+                _to: Address,
+                _function: Symbol,
+                _args: Vec<Val>,
+            ) -> Result<(), ContractError> {
+                Ok(())
+            }
+        }
+    }
+
+    mod rejecting_validation_module {
+        use super::*;
+
+        #[contract]
+        pub struct Module;
+
+        #[contractimpl]
+        impl Module {
+            pub fn validate(
+                _env: Env,
+                _to: Address,
+                _function: Symbol,
+                _args: Vec<Val>,
+            ) -> Result<(), ContractError> {
+                Err(ContractError::InsufficientPermission)
+            }
+        }
     }
 
     #[test]
@@ -1997,7 +2051,10 @@ mod test {
             &None,
             &0u64,
         );
-        assert_eq!(result, Err(Ok(ContractError::InsufficientPermission)));
+        assert!(matches!(
+            result,
+            Err(Ok(ContractError::InsufficientPermission))
+        ));
     }
 
     #[test]
@@ -2027,7 +2084,10 @@ mod test {
             &None,
             &0u64,
         );
-        assert_eq!(result, Err(Ok(ContractError::InsufficientPermission)));
+        assert!(matches!(
+            result,
+            Err(Ok(ContractError::InsufficientPermission))
+        ));
     }
 
     #[test]
@@ -2157,6 +2217,110 @@ mod test {
         let modules = client.get_modules();
         assert_eq!(modules.len(), 1);
         assert_eq!(modules.get_unchecked(0), module_addr);
+    }
+
+    #[test]
+    fn test_execute_validation_module_approval_allows_execution() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, AncoreAccount);
+        let client = AncoreAccountClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        init(&env, &client, &owner);
+        env.mock_all_auths();
+
+        let module_addr = env.register_contract(None, approving_validation_module::Module);
+        client.register_module(&module_addr);
+
+        let callee_id = env.register_contract(None, AncoreAccount);
+        let function = soroban_sdk::Symbol::new(&env, "get_version");
+        let args = Vec::new(&env);
+
+        let result = client.try_execute(
+            &CallerIdentity::Owner,
+            &callee_id,
+            &function,
+            &args,
+            &0u64,
+            &None,
+            &None,
+            &None,
+        );
+
+        assert!(result.is_ok());
+        assert_eq!(client.get_nonce(), 1);
+    }
+
+    #[test]
+    fn test_execute_validation_module_rejection_blocks_execution() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, AncoreAccount);
+        let client = AncoreAccountClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        init(&env, &client, &owner);
+        env.mock_all_auths();
+
+        let module_addr = env.register_contract(None, rejecting_validation_module::Module);
+        client.register_module(&module_addr);
+
+        let callee_id = env.register_contract(None, AncoreAccount);
+        let function = soroban_sdk::Symbol::new(&env, "get_version");
+        let args = Vec::new(&env);
+
+        let result = client.try_execute(
+            &CallerIdentity::Owner,
+            &callee_id,
+            &function,
+            &args,
+            &0u64,
+            &None,
+            &None,
+            &None,
+        );
+
+        assert!(matches!(
+            result,
+            Err(Ok(ContractError::InsufficientPermission))
+        ));
+        assert_eq!(client.get_nonce(), 0);
+    }
+
+    #[test]
+    fn test_execute_multiple_validation_modules_rejection_blocks_execution() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, AncoreAccount);
+        let client = AncoreAccountClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        init(&env, &client, &owner);
+        env.mock_all_auths();
+
+        let approving_module = env.register_contract(None, approving_validation_module::Module);
+        let rejecting_module = env.register_contract(None, rejecting_validation_module::Module);
+        client.register_module(&approving_module);
+        client.register_module(&rejecting_module);
+
+        let callee_id = env.register_contract(None, AncoreAccount);
+        let function = soroban_sdk::Symbol::new(&env, "get_version");
+        let args = Vec::new(&env);
+
+        let result = client.try_execute(
+            &CallerIdentity::Owner,
+            &callee_id,
+            &function,
+            &args,
+            &0u64,
+            &None,
+            &None,
+            &None,
+        );
+
+        assert!(matches!(
+            result,
+            Err(Ok(ContractError::InsufficientPermission))
+        ));
+        assert_eq!(client.get_nonce(), 0);
     }
 
     #[test]
