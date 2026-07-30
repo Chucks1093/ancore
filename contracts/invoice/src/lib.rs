@@ -7,8 +7,8 @@
 //! compatible with the #974 event-indexer decoder patterns.
 
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, symbol_short, token, Address, BytesN,
-    Env, String, Symbol, Vec,
+    contract, contracterror, contractimpl, contracttype, symbol_short, token, Address, Bytes,
+    BytesN, Env, FromVal, IntoVal, String, Symbol, Val, Vec,
 };
 
 // ---------------------------------------------------------------------------
@@ -98,7 +98,7 @@ const INSTANCE_BUMP_THRESHOLD: u32 = 15 * DAY_IN_LEDGERS; // 15 days
 // ---------------------------------------------------------------------------
 
 mod events {
-    use soroban_sdk::{symbol_short, Address, BytesN, Env, Symbol};
+    use soroban_sdk::{symbol_short, Address, BytesN, Env};
 
     pub fn invoice_created(env: &Env, id: BytesN<32>, creator: Address, recipient: Address, amount: i128, asset: Address, due_date: u64) {
         env.events().publish(
@@ -226,17 +226,8 @@ impl InvoiceContract {
         env.storage().instance().set(&KEY_COUNTER, &nonce);
 
         // Content-addressed ID
-        let id = env.crypto().sha256(
-            &(
-                creator.clone(),
-                recipient.clone(),
-                amount,
-                asset.clone(),
-                nonce,
-                env.ledger().timestamp(),
-            )
-            .into_val(&env),
-        );
+        let input_bytes = <Bytes as FromVal<Env, Val>>::from_val(&env, &(creator.clone(), recipient.clone(), amount, asset.clone(), nonce, env.ledger().timestamp()).into_val(&env));
+        let id: BytesN<32> = env.crypto().sha256(&input_bytes).into();
 
         let now = env.ledger().timestamp();
         let invoice = Invoice {
@@ -470,7 +461,7 @@ impl InvoiceContract {
 #[cfg(test)]
 mod test {
     use super::*;
-    use soroban_sdk::testutils::{Address as _, Ledger};
+    use soroban_sdk::testutils::{Address as _, Events, Ledger};
     use soroban_sdk::Address;
 
     /// Issue #1129: writes must extend the instance TTL so long-lived invoices
@@ -491,7 +482,7 @@ mod test {
         // Due 90 days out — the TTL bump should be sized to cover it.
         let due_date = env.ledger().timestamp() + 90 * 24 * 60 * 60;
 
-        let id = client
+        let id: BytesN<32> = client
             .create(
                 &creator,
                 &recipient,
@@ -500,8 +491,7 @@ mod test {
                 &None,
                 &Some(due_date),
                 &None,
-            )
-            .unwrap();
+            );
 
         // Advance the ledger well past the default 30-day bump (INSTANCE_BUMP_AMOUNT)
         // that would apply without a due-date-aware extension.
@@ -509,9 +499,145 @@ mod test {
             li.sequence_number = li.sequence_number.saturating_add(40 * DAY_IN_LEDGERS);
         });
 
-        let invoice = client.get(&id).unwrap();
+        let invoice = client.get(&id);
         assert_eq!(invoice.id, id);
         // Invoice starts in Draft; it was never opened, so status stays Draft.
         assert_eq!(invoice.status, InvoiceStatus::Draft);
+    }
+
+    #[test]
+    fn test_create_open_pay_happy_path() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract_id = env.register_contract(None, InvoiceContract);
+        let client = InvoiceContractClient::new(&env, &contract_id);
+
+        let creator = Address::generate(&env);
+        let recipient = Address::generate(&env);
+        let asset = Address::generate(&env);
+
+        let id = client
+            .create(&creator, &recipient, &1000i128, &asset, &None, &None, &None)
+            .unwrap();
+
+        let invoice = client.get(&id);
+        assert_eq!(invoice.status, InvoiceStatus::Draft);
+
+        // Open the invoice
+        client.open(&id).unwrap();
+        let invoice = client.get(&id);
+        assert_eq!(invoice.status, InvoiceStatus::Open);
+        assert_eq!(invoice.opened_at, Some(env.ledger().timestamp()));
+
+        // Verify opened event
+        let events_list = env.events().all();
+        let (_contract, topics, data) = events_list.get_unchecked(1).clone();
+        assert_eq!(topics.len(), 1);
+    }
+
+    #[test]
+    fn test_cancel_from_draft_and_open() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract_id = env.register_contract(None, InvoiceContract);
+        let client = InvoiceContractClient::new(&env, &contract_id);
+
+        let creator = Address::generate(&env);
+        let recipient = Address::generate(&env);
+        let asset = Address::generate(&env);
+
+        // Cancel from Draft
+        let id1 = client
+            .create(&creator, &recipient, &1000i128, &asset, &None, &None, &None)
+            .unwrap();
+        client.cancel(&id1).unwrap();
+        assert_eq!(client.get(&id1).unwrap().status, InvoiceStatus::Cancelled);
+
+        // Cancel from Open
+        let id2 = client
+            .create(&creator, &recipient, &1000i128, &asset, &None, &None, &None)
+            .unwrap();
+        client.open(&id2).unwrap();
+        client.cancel(&id2).unwrap();
+        assert_eq!(client.get(&id2).unwrap().status, InvoiceStatus::Cancelled);
+    }
+
+    #[test]
+    fn test_pay_rejected_on_non_open_status() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract_id = env.register_contract(None, InvoiceContract);
+        let client = InvoiceContractClient::new(&env, &contract_id);
+
+        let creator = Address::generate(&env);
+        let recipient = Address::generate(&env);
+        let asset = Address::generate(&env);
+
+        let id = client
+            .create(&creator, &recipient, &1000i128, &asset, &None, &None, &None)
+            .unwrap();
+
+        // Pay on Draft should fail
+        assert!(client.try_pay(&id, &recipient, &BytesN::from_array(&env, &[1u8; 32])).is_err());
+
+        // Open then pay should succeed (mock token transfer)
+        client.open(&id).unwrap();
+        client.pay(&id, &recipient, &BytesN::from_array(&env, &[1u8; 32])).unwrap();
+    }
+
+    #[test]
+    fn test_expiry_when_past_due_date() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract_id = env.register_contract(None, InvoiceContract);
+        let client = InvoiceContractClient::new(&env, &contract_id);
+
+        let creator = Address::generate(&env);
+        let recipient = Address::generate(&env);
+        let asset = Address::generate(&env);
+
+        let due_date = env.ledger().timestamp() + 1000;
+        let id = client
+            .create(&creator, &recipient, &1000i128, &asset, &None, &Some(due_date), &None)
+            .unwrap();
+
+        client.open(&id).unwrap();
+
+        // Advance past due date
+        env.ledger().with_mut(|li| {
+            li.timestamp = li.timestamp.saturating_add(2000);
+        });
+
+        // Pay should fail with Expired
+        assert!(client.try_pay(&id, &recipient, &BytesN::from_array(&env, &[1u8; 32])).is_err());
+
+        // Explicit expire should work
+        client.expire(&id).unwrap();
+        assert_eq!(client.get(&id).unwrap().status, InvoiceStatus::Expired);
+    }
+
+    #[test]
+    fn test_require_auth_enforced() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, InvoiceContract);
+        let client = InvoiceContractClient::new(&env, &contract_id);
+
+        let creator = Address::generate(&env);
+        let recipient = Address::generate(&env);
+        let asset = Address::generate(&env);
+
+        // create requires creator auth
+        let result = client.try_create(&creator, &recipient, &1000i128, &asset, &None, &None, &None);
+        assert!(result.is_err());
+
+        let id = client
+            .create(&creator, &recipient, &1000i128, &asset, &None, &None, &None)
+            .unwrap();
+
+        // open requires creator auth
+        assert!(client.try_open(&Address::generate(&env), &id).is_err());
+
+        // cancel requires creator auth
+        assert!(client.try_cancel(&Address::generate(&env), &id).is_err());
     }
 }
