@@ -7,9 +7,12 @@ use uuid::Uuid;
 use crate::error::{ApiError, Result};
 use crate::schema::contract_event::{ContractEvent, ContractEventFilter, InsertContractEvent};
 
-const DEFAULT_LIMIT: u32 = 50;
-const MAX_LIMIT: u32 = 200;
-const MIN_LIMIT: u32 = 1;
+/// Default page size when `limit` is omitted.
+pub const DEFAULT_LIMIT: u32 = 50;
+/// Minimum allowed page size (values below are clamped up).
+pub const MIN_LIMIT: u32 = 1;
+/// Maximum allowed page size (values above are clamped down).
+pub const MAX_LIMIT: u32 = 200;
 
 /// Paginated result for contract events.
 #[derive(Debug, Clone, Serialize)]
@@ -303,5 +306,26 @@ mod tests {
         assert!(decode_cursor("not-valid-base64!!!").is_err());
         assert!(decode_cursor("aGVsbG8=").is_err());
         assert!(decode_cursor("e30=").is_err());
+    }
+
+    #[test]
+    fn test_limit_clamping_below_min() {
+        assert_eq!(MIN_LIMIT, 1);
+        let clamped = 0u32.clamp(MIN_LIMIT, MAX_LIMIT);
+        assert_eq!(clamped, MIN_LIMIT);
+    }
+
+    #[test]
+    fn test_limit_clamping_above_max() {
+        assert_eq!(MAX_LIMIT, 200);
+        let clamped = 500u32.clamp(MIN_LIMIT, MAX_LIMIT);
+        assert_eq!(clamped, MAX_LIMIT);
+    }
+
+    #[test]
+    fn test_limit_within_range_not_clamped() {
+        let limit = 50u32;
+        let clamped = limit.clamp(MIN_LIMIT, MAX_LIMIT);
+        assert_eq!(clamped, 50);
     }
 }
