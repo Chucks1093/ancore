@@ -166,7 +166,10 @@ export class WalletApiSendStrategy implements SendStrategy {
           minBalance: calculateMinBalance(result.fee),
         };
       }
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.message === 'fee unavailable') {
+        throw err;
+      }
       // Fall through to default
     }
 
@@ -277,7 +280,10 @@ function resolveAsset(asset: SendParams['asset']): Asset {
 }
 
 function calculateMinBalance(feeXlm: string): string {
-  const feeNum = parseFloat(feeXlm) || 0;
+  const feeNum = parseFloat(feeXlm);
+  if (!Number.isFinite(feeNum)) {
+    throw new Error('fee unavailable');
+  }
   // Base reserve is 0.5 XLM + fee
   return (0.5 + feeNum).toFixed(7);
 }

@@ -104,13 +104,22 @@ export function useSendFeeEstimate(
           if (cancelledRef.current) return;
 
           if ('fee' in result && typeof result.fee === 'string') {
-            const feeNum = parseFloat(result.fee) || 0;
-            setState({
-              fee: result.fee,
-              minBalance: (0.5 + feeNum).toFixed(7),
-              loading: false,
-              error: null,
-            });
+            const feeNum = parseFloat(result.fee);
+            if (Number.isFinite(feeNum)) {
+              setState({
+                fee: result.fee,
+                minBalance: (0.5 + feeNum).toFixed(7),
+                loading: false,
+                error: null,
+              });
+            } else {
+              setState({
+                fee: '0.0000100',
+                minBalance: '0.0050100',
+                loading: false,
+                error: 'fee unavailable',
+              });
+            }
           } else {
             const errorMsg =
               'error' in result && typeof result.error === 'string'

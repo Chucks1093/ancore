@@ -37,6 +37,24 @@ describe('WalletApiSendStrategy', () => {
     const available = await strategy.isAvailable();
     expect(available).toBe(false);
   });
+
+  it('throws fee unavailable when simulated fee is unparseable', async () => {
+    vi.mock('@ancore/stellar', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@ancore/stellar')>();
+      return {
+        ...actual,
+        createStellarClient: () => ({
+          simulateTransaction: vi.fn().mockResolvedValue({ fee: 'not-a-number' }),
+        }),
+      };
+    });
+
+    const { WalletApiSendStrategy } = await import('../send-service');
+    const strategy = new WalletApiSendStrategy(TESTNET_DEPS);
+    await expect(strategy.estimateFee({ recipient: VALID_ADDRESS, amount: '10' })).rejects.toThrow('fee unavailable');
+    
+    vi.doUnmock('@ancore/stellar');
+  });
 });
 
 // ---------------------------------------------------------------------------
