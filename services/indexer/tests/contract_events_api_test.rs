@@ -256,6 +256,7 @@ async fn integration_test_cursor_pagination() {
 
     // First page
     let response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/contract-events?limit=2")
@@ -274,7 +275,7 @@ async fn integration_test_cursor_pagination() {
     let next_cursor = json["pagination"]["next_cursor"].as_str().unwrap();
 
     // Second page
-    let response = app
+    response = app
         .oneshot(
             Request::builder()
                 .uri(format!(
