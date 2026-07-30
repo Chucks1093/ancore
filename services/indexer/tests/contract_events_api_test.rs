@@ -158,10 +158,7 @@ async fn integration_test_offset_rejected() {
     let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
 
     assert_eq!(json["code"], "INVALID_FILTER");
-    assert!(json["message"]
-        .as_str()
-        .unwrap()
-        .contains("cursor_after"));
+    assert!(json["message"].as_str().unwrap().contains("cursor_after"));
 }
 
 #[tokio::test]
