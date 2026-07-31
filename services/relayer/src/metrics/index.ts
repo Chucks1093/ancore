@@ -116,6 +116,26 @@ class RelayGauge {
 }
 
 // ---------------------------------------------------------------------------
+// Counter — nonce_operations_total
+// ---------------------------------------------------------------------------
+
+class NonceOperationCounter {
+  private readonly counts: Map<string, number> = new Map();
+
+  increment(outcome: 'replay' | 'valid' | 'error'): void {
+    this.counts.set(outcome, (this.counts.get(outcome) ?? 0) + 1);
+  }
+
+  snapshot(): CounterSnapshot {
+    return Object.fromEntries(this.counts);
+  }
+
+  reset(): void {
+    this.counts.clear();
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Singleton registry
 // ---------------------------------------------------------------------------
 
@@ -125,6 +145,7 @@ export const relayLatency = new RelayHistogram([
 ]);
 export const relayErrors = new RelayCounter();
 export const relayValidationFailures = new RelayCounter();
+export const nonceOperations = new NonceOperationCounter();
 export const relayMockMode = new RelayGauge();
 export const relaySubmitLatency = new RelayHistogram([
   0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 20,
@@ -333,6 +354,17 @@ export function renderPrometheusMetrics(): string {
   );
   lines.push('# TYPE scheduler_job_lag_seconds_total counter');
   lines.push(`scheduler_job_lag_seconds_total ${schedulerJobLagSecondsTotal.get().toFixed(3)}`);
+
+  // ── nonce_operations_total ───────────────────────────────────────────────
+  lines.push('# HELP nonce_operations_total Counter of nonce check outcomes (replay/valid/error)');
+  lines.push('# TYPE nonce_operations_total counter');
+  const nonceSnap = nonceOperations.snapshot();
+  for (const [outcome, count] of Object.entries(nonceSnap)) {
+    lines.push(`nonce_operations_total{outcome="${outcome}"} ${count}`);
+  }
+  if (Object.keys(nonceSnap).length === 0) {
+    lines.push('nonce_operations_total{outcome=""} 0');
+  }
 
   return lines.join('\n') + '\n';
 }
