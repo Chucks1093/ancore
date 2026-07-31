@@ -1,5 +1,6 @@
 import { validateMnemonicStrength, MnemonicValidationError } from '../mnemonic';
 import * as bip39 from 'bip39';
+import vectors from './vectors/mnemonic-strength-vectors.json';
 
 describe('validateMnemonicStrength', () => {
   it('accepts a valid 12-word mnemonic', () => {
@@ -168,5 +169,37 @@ describe('validateMnemonicStrength', () => {
         expect(typeof err.details).toBe('string');
       }
     }
+  });
+});
+
+// ── JSON vector suite ─────────────────────────────────────────────────────────
+
+describe('validateMnemonicStrength — JSON vectors', () => {
+  interface Vector {
+    id: string;
+    description: string;
+    input: string;
+    expectThrow: boolean;
+    expectedCode?: string;
+  }
+
+  (vectors.vectors as Vector[]).forEach(({ id, description, input, expectThrow, expectedCode }) => {
+    it(`[${id}] ${description}`, () => {
+      if (!expectThrow) {
+        expect(() => validateMnemonicStrength(input)).not.toThrow();
+      } else {
+        expect(() => validateMnemonicStrength(input)).toThrow(MnemonicValidationError);
+        if (expectedCode) {
+          try {
+            validateMnemonicStrength(input);
+          } catch (err) {
+            expect(err).toBeInstanceOf(MnemonicValidationError);
+            if (err instanceof MnemonicValidationError) {
+              expect(err.code).toBe(expectedCode);
+            }
+          }
+        }
+      }
+    });
   });
 });

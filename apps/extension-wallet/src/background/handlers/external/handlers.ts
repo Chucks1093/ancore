@@ -19,7 +19,7 @@ import type {
 import { ExternalApiMethodName as MethodName } from '@ancore/types';
 import { NETWORK_PASSPHRASES } from '@ancore/wallet-shared';
 import { isAllowed, addToAllowlist } from './allowlist';
-import { enqueueApproval, registerResponseCallbacks } from './response-queue';
+import { enqueueApproval, registerResponseCallbacks, removeApproval, writeSessionEntry } from './response-queue';
 import { openApprovalWindow } from '../../approval-window';
 import { getSettingsState } from '@/stores/settings';
 
@@ -147,7 +147,17 @@ export async function handleGetSmartAccount(
 function waitForApproval(requestId: string, timeoutMs = 5 * 60 * 1000): Promise<unknown> {
   return new Promise<unknown>((resolve, reject) => {
     const timer = setTimeout(() => {
-      reject(new Error('Approval request timed out.'));
+      // Clean up in-memory queue so the approval UI no longer shows a stale entry
+      removeApproval(requestId);
+      // Persist the timed-out status so the content script / popup can detect
+      // expiry without a long-lived port — the session entry is read by the
+      // approval UI to display a "Request expired" message.
+      writeSessionEntry({ requestId, status: 'timed-out' });
+      reject(
+        new Error(
+          'Approval request expired after 5 minutes. Please reconnect to the dApp and try again.'
+        )
+      );
     }, timeoutMs);
 
     registerResponseCallbacks(
