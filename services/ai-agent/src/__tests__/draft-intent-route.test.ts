@@ -19,7 +19,10 @@ describe('POST /agent/draft-intent — LLM integration, guardrail, and audit log
 
     const res = await request(app)
       .post('/agent/draft-intent')
-      .send({ prompt: 'Send 10 XLM to Alice', accountId: 'GABC123' });
+      .send({
+        prompt: 'Send 10 XLM to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
+        accountId: 'GABC123',
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('draft');
@@ -42,7 +45,10 @@ describe('POST /agent/draft-intent — LLM integration, guardrail, and audit log
   it('writes an audit log entry with timestamp, accountId, source, intentType, and riskLevel', async () => {
     await request(app)
       .post('/agent/draft-intent')
-      .send({ prompt: 'Send 10 XLM to Alice', accountId: 'GABC123' });
+      .send({
+        prompt: 'Send 10 XLM to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
+        accountId: 'GABC123',
+      });
 
     const auditCall = infoSpy.mock.calls.find(([, message]) => message === 'draft_intent_audit');
     expect(auditCall).toBeDefined();
@@ -60,7 +66,7 @@ describe('POST /agent/draft-intent — LLM integration, guardrail, and audit log
 
   it('never lets a secret embedded in the prompt reach the logger verbatim', async () => {
     const fakeSecret = 'S' + 'A'.repeat(55);
-    const promptWithSecret = `Send 10 XLM to Alice, my secret key is ${fakeSecret}`;
+    const promptWithSecret = `Send 10 XLM to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5, my secret key is ${fakeSecret}`;
 
     const res = await request(app)
       .post('/agent/draft-intent')

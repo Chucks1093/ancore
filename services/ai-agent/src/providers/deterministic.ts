@@ -4,6 +4,7 @@ import type { DraftIntentInput, ProviderDraftResult } from './types';
 const INVOICE_KEYWORDS = ['invoice', 'bill me', 'request payment', 'request a payment'];
 
 const STELLAR_ADDRESS_RE = /\bG[A-Z2-7]{55}\b/;
+const STELLAR_ADDRESS_RE_G = /\bG[A-Z2-7]{55}\b/g;
 const AMOUNT_RE = /(\d+(?:\.\d+)?)/;
 
 function isInvoicePrompt(prompt: string): boolean {
@@ -12,7 +13,10 @@ function isInvoicePrompt(prompt: string): boolean {
 }
 
 function extractAmount(prompt: string): string {
-  const match = prompt.match(AMOUNT_RE);
+  // Stellar strkeys are base32 and contain the digits 2-7, so an address in the
+  // prompt would otherwise be a candidate amount ("Pay GD..7.. 25 XLM" -> "7").
+  // Strip addresses before scanning for a number.
+  const match = prompt.replace(STELLAR_ADDRESS_RE_G, ' ').match(AMOUNT_RE);
   return match ? match[1] : '10';
 }
 

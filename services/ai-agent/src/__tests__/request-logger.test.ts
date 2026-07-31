@@ -21,7 +21,10 @@ describe('Request Logger Middleware', () => {
   it('logs request completion and redacts prompt if it ever gets logged', async () => {
     const response = await request(app)
       .post('/agent/draft-intent')
-      .send({ prompt: 'Send $5 to Bob', accountId: '123' });
+      .send({
+        prompt: 'Send $5 to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
+        accountId: '123',
+      });
 
     expect(response.status).toBe(200);
 
@@ -45,6 +48,8 @@ describe('Request Logger Middleware', () => {
       ([, message]) => message === 'request_complete'
     );
     expect(requestCompleteCall).toBeDefined();
-    expect(JSON.stringify(requestCompleteCall)).not.toContain('Send $5 to Bob');
+    expect(JSON.stringify(requestCompleteCall)).not.toContain(
+      'Send $5 to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5'
+    );
   });
 });

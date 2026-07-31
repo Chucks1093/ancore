@@ -2,7 +2,10 @@ import { deterministicDraftIntent } from '../deterministic';
 
 describe('deterministicDraftIntent', () => {
   it('drafts a payment intent by default', () => {
-    const result = deterministicDraftIntent({ prompt: 'Send 10 XLM to Alice', accountId: 'GACC' });
+    const result = deterministicDraftIntent({
+      prompt: 'Send 10 XLM to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
+      accountId: 'GACC',
+    });
     expect(result.intent.type).toBe('payment');
     if (result.intent.type === 'payment') {
       expect(result.intent.amount).toBe('10');
@@ -45,9 +48,24 @@ describe('deterministicDraftIntent', () => {
   });
 
   it('defaults amount to "10" when no number is present in the prompt', () => {
-    const result = deterministicDraftIntent({ prompt: 'Send some XLM to Bob', accountId: 'GACC' });
+    const result = deterministicDraftIntent({
+      prompt: 'Send some XLM to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
+      accountId: 'GACC',
+    });
     if (result.intent.type === 'payment') {
       expect(result.intent.amount).toBe('10');
+    }
+  });
+
+  it('does not mistake base32 digits inside the destination for the amount', () => {
+    // Stellar strkeys use the digits 2-7, so an unguarded amount scan picks one up.
+    const dest = 'GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5';
+    const result = deterministicDraftIntent({
+      prompt: `Pay ${dest} 25 XLM`,
+      accountId: 'GACC',
+    });
+    if (result.intent.type === 'payment') {
+      expect(result.intent.amount).toBe('25');
     }
   });
 

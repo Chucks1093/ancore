@@ -13,7 +13,10 @@ function stubProvider(overrides: Partial<LlmProvider>): LlmProvider {
 }
 
 describe('generateDraftIntent', () => {
-  const input: DraftIntentInput = { prompt: 'Send 10 XLM to Alice', accountId: 'GACC' };
+  const input: DraftIntentInput = {
+    prompt: 'Send 10 XLM to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
+    accountId: 'GACC',
+  };
 
   it('uses the LLM provider and reports source "llm" when it succeeds', async () => {
     const llmResult: ProviderDraftResult = {
