@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AddSessionKeyDialog } from './AddSessionKeyDialog';
 import { useSessionKeys } from '../../hooks/useSessionKeys';
 import { SessionKeyRow } from '../../features/session-keys';
+import { KeyRound } from 'lucide-react';
 
 export const SessionKeysScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -64,7 +65,23 @@ export const SessionKeysScreen: React.FC = () => {
         {isLoading && <p className="text-sm text-gray-400">Loading…</p>}
 
         {!isLoading && sessionKeys.length === 0 && (
-          <p className="text-sm text-gray-500">No session keys yet.</p>
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex flex-col items-center gap-3 py-12 text-center text-muted-foreground"
+          >
+            <KeyRound className="h-10 w-10 opacity-30" aria-hidden />
+            <p className="text-sm font-medium">No session keys yet</p>
+            <p className="text-xs text-muted-foreground">
+              Session keys let apps act on your behalf with limited permissions and a fixed expiry.
+            </p>
+            <button
+              onClick={() => setDialogOpen(true)}
+              className="mt-2 rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground transition hover:opacity-90"
+            >
+              Create Session Key
+            </button>
+          </div>
         )}
 
         {!isLoading && sessionKeys.length > 0 && (
