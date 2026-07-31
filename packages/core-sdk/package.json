@@ -20,7 +20,7 @@
     "test:integration": "jest --testPathPattern=integration --no-coverage",
     "lint": "eslint src/",
     "clean": "rm -rf dist",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit -p tsconfig.build.json"
   },
   "keywords": [
     "ancore",

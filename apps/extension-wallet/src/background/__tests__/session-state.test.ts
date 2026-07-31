@@ -27,20 +27,22 @@ beforeEach(() => {
   Object.keys(mockSessionStorage).forEach((key) => delete mockSessionStorage[key]);
   // Reset session state
   setBackgroundSessionUnlocked(false);
-  
+
   // Setup chrome-storage mocks
   vi.mocked(chromeStorage.getChromeSessionStorage).mockImplementation(async (key: string) => {
     return mockSessionStorage[key] ?? null;
   });
-  
-  vi.mocked(chromeStorage.setChromeSessionStorage).mockImplementation(async (key: string, value: unknown) => {
-    mockSessionStorage[key] = value;
-  });
-  
+
+  vi.mocked(chromeStorage.setChromeSessionStorage).mockImplementation(
+    async (key: string, value: unknown) => {
+      mockSessionStorage[key] = value;
+    }
+  );
+
   vi.mocked(chromeStorage.removeChromeSessionStorage).mockImplementation(async (key: string) => {
     delete mockSessionStorage[key];
   });
-  
+
   vi.mocked(chromeStorage.getChromeLocalStorage).mockImplementation(async () => {
     return null;
   });
@@ -54,7 +56,7 @@ describe('session state persistence', () => {
   it('sets background session unlocked flag', () => {
     setBackgroundSessionUnlocked(true);
     expect(isBackgroundSessionUnlocked()).toBe(true);
-    
+
     setBackgroundSessionUnlocked(false);
     expect(isBackgroundSessionUnlocked()).toBe(false);
   });
@@ -66,7 +68,7 @@ describe('session state persistence', () => {
     expect(chromeStorage.setChromeSessionStorage).toHaveBeenCalled();
     const setCall = vi.mocked(chromeStorage.setChromeSessionStorage).mock.calls[0];
     const record = setCall[1] as { unlockedAt: number; expiresAt: number };
-    
+
     expect(record.unlockedAt).toBeGreaterThanOrEqual(now);
     expect(record.expiresAt).toBe(record.unlockedAt + DEFAULT_UNLOCK_SESSION_TTL_MS);
     expect(isBackgroundSessionUnlocked()).toBe(true);
@@ -80,7 +82,7 @@ describe('session state persistence', () => {
     expect(chromeStorage.setChromeSessionStorage).toHaveBeenCalled();
     const setCall = vi.mocked(chromeStorage.setChromeSessionStorage).mock.calls[0];
     const record = setCall[1] as { unlockedAt: number; expiresAt: number };
-    
+
     expect(record.expiresAt).toBe(record.unlockedAt + customTtl);
   });
 
@@ -96,7 +98,7 @@ describe('session state persistence', () => {
     expect(chromeStorage.setChromeSessionStorage).toHaveBeenCalled();
     const setCall = vi.mocked(chromeStorage.setChromeSessionStorage).mock.calls[0];
     const record = setCall[1] as { unlockedAt: number; expiresAt: number };
-    
+
     expect(record.expiresAt).toBe(record.unlockedAt + 15 * 60 * 1000);
   });
 
@@ -109,7 +111,7 @@ describe('session state persistence', () => {
 
     const setCall = vi.mocked(chromeStorage.setChromeSessionStorage).mock.calls[0];
     const record = setCall[1] as { unlockedAt: number; expiresAt: number };
-    
+
     expect(record.expiresAt).toBe(record.unlockedAt + DEFAULT_UNLOCK_SESSION_TTL_MS);
   });
 
@@ -122,13 +124,16 @@ describe('session state persistence', () => {
 
     const setCall = vi.mocked(chromeStorage.setChromeSessionStorage).mock.calls[0];
     const record = setCall[1] as { unlockedAt: number; expiresAt: number };
-    
+
     expect(record.expiresAt).toBe(record.unlockedAt + DEFAULT_UNLOCK_SESSION_TTL_MS);
   });
 
   it('clears unlock session and resets flag', async () => {
     setBackgroundSessionUnlocked(true);
-    mockSessionStorage['ancore_unlock_session'] = { unlockedAt: Date.now(), expiresAt: Date.now() + 100000 };
+    mockSessionStorage['ancore_unlock_session'] = {
+      unlockedAt: Date.now(),
+      expiresAt: Date.now() + 100000,
+    };
 
     await clearUnlockSession();
 
@@ -206,7 +211,7 @@ describe('session expiry refresh', () => {
     expect(chromeStorage.setChromeSessionStorage).toHaveBeenCalled();
     const setCall = vi.mocked(chromeStorage.setChromeSessionStorage).mock.calls[0];
     const record = setCall[1] as { unlockedAt: number; expiresAt: number };
-    
+
     expect(record.expiresAt).toBe(record.unlockedAt + 10 * 60 * 1000);
   });
 
@@ -232,7 +237,7 @@ describe('session expiry refresh', () => {
 
     const setCall = vi.mocked(chromeStorage.setChromeSessionStorage).mock.calls[0];
     const record = setCall[1] as { unlockedAt: number; expiresAt: number };
-    
+
     expect(record.expiresAt).toBe(record.unlockedAt + 5 * 60 * 1000);
   });
 });

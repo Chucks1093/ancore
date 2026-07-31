@@ -63,7 +63,11 @@ export function MnemonicDisplayScreen({
         <button aria-label="Cancel wallet creation" onClick={onCancel} type="button">
           Cancel
         </button>
-        <button aria-label="I wrote down my recovery phrase, continue" onClick={onContinue} type="button">
+        <button
+          aria-label="I wrote down my recovery phrase, continue"
+          onClick={onContinue}
+          type="button"
+        >
           I wrote it down
         </button>
       </div>

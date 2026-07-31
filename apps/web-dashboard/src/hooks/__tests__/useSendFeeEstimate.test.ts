@@ -109,7 +109,7 @@ describe('useSendFeeEstimate', () => {
     expect(result.current.fee).toBe('0.0000100');
     expect(result.current.minBalance).toBe('0.0050100');
     expect(result.current.error).toBe('fee unavailable');
-    
+
     vi.doUnmock('@ancore/stellar');
   });
 });

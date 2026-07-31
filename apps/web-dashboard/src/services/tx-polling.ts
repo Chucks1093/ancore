@@ -70,7 +70,9 @@ async function pollHorizonTransaction(
 }
 
 async function checkHorizonStatus(hash: string, network: string): Promise<TransactionPollStatus> {
-  const baseUrl = DEFAULT_HORIZON_URLS[network as keyof typeof DEFAULT_HORIZON_URLS] ?? DEFAULT_HORIZON_URLS.testnet;
+  const baseUrl =
+    DEFAULT_HORIZON_URLS[network as keyof typeof DEFAULT_HORIZON_URLS] ??
+    DEFAULT_HORIZON_URLS.testnet;
   const response = await fetch(`${baseUrl}/transactions/${hash}`);
 
   if (response.status === 404) {

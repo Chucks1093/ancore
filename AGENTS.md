@@ -1,7 +1,5 @@
 # Ancore
 
-
-
 > Stellar-native account abstraction stack: Soroban smart account contract, SDKs, relayer, indexer, and wallet apps.
 > Wallet engineering standards are benchmarked against SDF [Freighter](https://github.com/stellar/freighter) (extension) and [Freighter Mobile](https://github.com/stellar/freighter-mobile) — see [docs/wallets/FREIGHTER_COMPARISON.md](docs/wallets/FREIGHTER_COMPARISON.md).
 

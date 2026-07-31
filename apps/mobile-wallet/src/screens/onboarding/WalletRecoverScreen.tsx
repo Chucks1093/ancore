@@ -52,7 +52,12 @@ export function WalletRecoverScreen({ onBack = noop, onCancel = noop, onContinue
         <button aria-label="Cancel wallet recovery" onClick={onCancel} type="button">
           Cancel
         </button>
-        <button aria-label="Continue wallet recovery" disabled={!canContinue} onClick={onContinue} type="button">
+        <button
+          aria-label="Continue wallet recovery"
+          disabled={!canContinue}
+          onClick={onContinue}
+          type="button"
+        >
           Continue
         </button>
       </div>

@@ -51,8 +51,10 @@ describe('WalletApiSendStrategy', () => {
 
     const { WalletApiSendStrategy } = await import('../send-service');
     const strategy = new WalletApiSendStrategy(TESTNET_DEPS);
-    await expect(strategy.estimateFee({ recipient: VALID_ADDRESS, amount: '10' })).rejects.toThrow('fee unavailable');
-    
+    await expect(strategy.estimateFee({ recipient: VALID_ADDRESS, amount: '10' })).rejects.toThrow(
+      'fee unavailable'
+    );
+
     vi.doUnmock('@ancore/stellar');
   });
 });

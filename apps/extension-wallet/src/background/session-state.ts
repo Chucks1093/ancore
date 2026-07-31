@@ -40,7 +40,7 @@ async function getAutoLockTtlMs(): Promise<number> {
     const settingsData = await getChromeLocalStorage('ancore-settings');
     const settings = settingsData as Record<string, unknown> | undefined;
     const autoLockMinutes = settings?.autoLockMinutes as number | undefined;
-    
+
     if (typeof autoLockMinutes === 'number' && autoLockMinutes > 0) {
       return autoLockMinutes * 60_000; // Convert minutes to milliseconds
     }
@@ -50,12 +50,10 @@ async function getAutoLockTtlMs(): Promise<number> {
   return DEFAULT_UNLOCK_SESSION_TTL_MS;
 }
 
-export async function persistUnlockSession(
-  ttlMs?: number
-): Promise<void> {
+export async function persistUnlockSession(ttlMs?: number): Promise<void> {
   // If TTL not provided, read from settings
-  const effectiveTtlMs = ttlMs ?? await getAutoLockTtlMs();
-  
+  const effectiveTtlMs = ttlMs ?? (await getAutoLockTtlMs());
+
   const now = Date.now();
   const record: UnlockSessionRecord = {
     unlockedAt: now,
@@ -102,7 +100,7 @@ export async function refreshSessionExpiry(): Promise<void> {
   if (!_sessionUnlocked) {
     return; // Only refresh if currently unlocked
   }
-  
+
   const ttlMs = await getAutoLockTtlMs();
   await persistUnlockSession(ttlMs);
 }

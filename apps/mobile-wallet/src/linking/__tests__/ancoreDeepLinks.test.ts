@@ -93,9 +93,7 @@ describe('ancore://pay — Stellar payment URI paths', () => {
   });
 
   it('rejects amount with more than 7 decimal places', () => {
-    expect(
-      parsePaymentUri(`stellar:pay?destination=${VALID_DEST}&amount=1.123456789`)
-    ).toBeNull();
+    expect(parsePaymentUri(`stellar:pay?destination=${VALID_DEST}&amount=1.123456789`)).toBeNull();
   });
 
   it('rejects missing destination', () => {

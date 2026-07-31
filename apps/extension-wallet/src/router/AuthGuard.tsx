@@ -137,7 +137,7 @@ export function ExtensionAuthProvider({
       if (!hasExtensionStorage()) {
         return;
       }
-      
+
       const response = await chrome.runtime.sendMessage({ type: 'GET_WALLET_STATE' });
       if (response?.state === 'unlocked') {
         setIsUnlocked(true);
@@ -176,7 +176,7 @@ export function ExtensionAuthProvider({
 
           setUnlockError(null);
           setIsUnlocked(true);
-          
+
           // Refresh from background to ensure sync
           await refreshUnlockStatusInternal();
           return true;

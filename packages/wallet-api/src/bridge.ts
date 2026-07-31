@@ -94,5 +94,3 @@ export function sendExternalRequest<T = unknown>(
 export function __parseResponse(data: unknown): ExternalResponseEnvelope | null {
   return isExternalResponse(data) ? data : null;
 }
-
-

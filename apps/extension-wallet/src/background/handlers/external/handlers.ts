@@ -21,7 +21,12 @@ import { NETWORK_PASSPHRASES } from '@ancore/wallet-shared';
 import { AccountContract } from '@ancore/account-abstraction';
 import { rpc as StellarRpc } from '@stellar/stellar-sdk';
 import { isAllowed, addToAllowlist } from './allowlist';
-import { enqueueApproval, registerResponseCallbacks, removeApproval, writeSessionEntry } from './response-queue';
+import {
+  enqueueApproval,
+  registerResponseCallbacks,
+  removeApproval,
+  writeSessionEntry,
+} from './response-queue';
 import { openApprovalWindow } from '../../approval-window';
 import { getSettingsState } from '@/stores/settings';
 import { readChromeLocal } from '../../chrome-api';

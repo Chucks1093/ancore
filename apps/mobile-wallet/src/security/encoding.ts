@@ -32,7 +32,7 @@ export function base64ToBytes(base64: string): Uint8Array {
   }
 
   let binary: string;
-  
+
   try {
     binary = globalThis.atob(sanitized);
   } catch (rawError) {

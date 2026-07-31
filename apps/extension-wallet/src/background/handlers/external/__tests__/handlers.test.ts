@@ -2,7 +2,12 @@
  * Unit tests for handleGetPublicKey, handleGetNetwork, and handleGetSmartAccount (#809, #960)
  */
 
-import { handleGetPublicKey, handleGetNetwork, handleRequestAccess, handleGetSmartAccount } from '../handlers';
+import {
+  handleGetPublicKey,
+  handleGetNetwork,
+  handleRequestAccess,
+  handleGetSmartAccount,
+} from '../handlers';
 import type { ExternalHandlerContext } from '@ancore/types';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────────

@@ -59,9 +59,11 @@ export function getChromeLocalStorageArea(): ChromeStorageArea | undefined {
 }
 
 /** Returns `chrome.storage.session`, or `undefined` outside the extension. */
-export function getChromeSessionStorageArea(): (ChromeStorageArea & {
-  remove(key: string, callback?: StorageRemoveCallback): void;
-}) | undefined {
+export function getChromeSessionStorageArea():
+  | (ChromeStorageArea & {
+      remove(key: string, callback?: StorageRemoveCallback): void;
+    })
+  | undefined {
   return getChromeApi()?.storage?.session;
 }
 
@@ -98,9 +100,7 @@ export function writeChromeLocal(key: string, value: unknown): Promise<void> {
   return Promise.resolve();
 }
 
-export function sendChromeMessage(
-  message: unknown
-): Promise<unknown> {
+export function sendChromeMessage(message: unknown): Promise<unknown> {
   const runtime = getChromeRuntime();
   if (!runtime?.sendMessage) {
     return Promise.reject(new Error('Chrome runtime not available'));

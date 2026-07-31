@@ -22,7 +22,7 @@ describe('Security Encoding Infrastructure Guards', () => {
   });
 
   it('should fail on inputs that break the 4-byte padding modulus alignment constraint', () => {
-    const unpaddedMismatchedLength = 'dGVzdA'; 
+    const unpaddedMismatchedLength = 'dGVzdA';
 
     expect(() => {
       base64ToBytes(unpaddedMismatchedLength);

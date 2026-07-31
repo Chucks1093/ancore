@@ -42,10 +42,7 @@ export function NetworkBadge({ network, className = '' }: NetworkBadgeProps) {
       aria-label={`Active network: ${styles.label}`}
       className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${styles.badge} ${className}`}
     >
-      <span
-        aria-hidden="true"
-        className={`h-1.5 w-1.5 rounded-full ${styles.dot} animate-pulse`}
-      />
+      <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${styles.dot} animate-pulse`} />
       {styles.label}
     </span>
   );

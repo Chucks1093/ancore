@@ -25,7 +25,8 @@ export class NativeBiometricAdapter implements IBiometricAuthService {
     errorCode?: BiometricFailureReason;
   }> {
     try {
-      const { available, biometryType: _biometryType } = await this.rnBiometrics.isSensorAvailable();
+      const { available, biometryType: _biometryType } =
+        await this.rnBiometrics.isSensorAvailable();
       if (!available) {
         return { success: false, errorCode: 'BIOMETRIC_NOT_AVAILABLE' };
       }

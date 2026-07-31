@@ -647,7 +647,9 @@ describe('retry', () => {
 
     describe('maxAttempts enforcement', () => {
       it('wallet preset stops after exactly 3 attempts on persistent 504', async () => {
-        const fn = jest.fn().mockRejectedValue(new NetworkError('Gateway timeout', { statusCode: 504 }));
+        const fn = jest
+          .fn()
+          .mockRejectedValue(new NetworkError('Gateway timeout', { statusCode: 504 }));
 
         await expect(
           withRetry(fn, {
@@ -661,7 +663,9 @@ describe('retry', () => {
       });
 
       it('indexer preset stops after exactly 5 attempts on persistent 504', async () => {
-        const fn = jest.fn().mockRejectedValue(new NetworkError('Gateway timeout', { statusCode: 504 }));
+        const fn = jest
+          .fn()
+          .mockRejectedValue(new NetworkError('Gateway timeout', { statusCode: 504 }));
 
         await expect(
           withRetry(fn, {

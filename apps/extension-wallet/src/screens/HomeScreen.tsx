@@ -39,10 +39,7 @@ const HomeScreen: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <ServiceHealthBanner
-        errors={configErrors}
-        onRetry={isChecking ? undefined : retry}
-      />
+      <ServiceHealthBanner errors={configErrors} onRetry={isChecking ? undefined : retry} />
       <header className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
         <p className="text-xs uppercase tracking-[0.25em] text-cyan-400">Main Account</p>
         <div className="mt-1 h-8 flex items-center">
