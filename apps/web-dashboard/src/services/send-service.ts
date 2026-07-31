@@ -1,7 +1,13 @@
 import { StellarClient, createStellarClient } from '@ancore/stellar';
 import { buildDefaultRelayPayload, resolveRelayerBaseUrl } from '@ancore/core-sdk';
 import { NETWORK_PASSPHRASES } from '@ancore/wallet-shared';
-import { Operation, Asset, TransactionBuilder, Account } from '@stellar/stellar-sdk';
+import {
+  Operation,
+  Asset,
+  TransactionBuilder,
+  Account,
+  TimeoutInfinite,
+} from '@stellar/stellar-sdk';
 import type { Transaction } from '@stellar/stellar-sdk';
 
 // ---------------------------------------------------------------------------
@@ -152,10 +158,16 @@ export class WalletApiSendStrategy implements SendStrategy {
       for (const op of ops) {
         txBuilder.addOperation(op);
       }
+      // Required by stellar-sdk: build() throws without explicit timebounds.
+      // Omitting this made every estimate fall through to the static default.
+      txBuilder.setTimeout(TimeoutInfinite);
       const tx = txBuilder.build();
       const result = await client.simulateTransaction(tx.toXDR());
 
       if ('fee' in result) {
+        if (!Number.isFinite(Number(result.fee))) {
+          throw new Error('fee unavailable');
+        }
         return {
           baseFee: result.fee,
           minBalance: calculateMinBalance(result.fee),

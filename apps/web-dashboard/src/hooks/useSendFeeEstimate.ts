@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { createStellarClient } from '@ancore/stellar';
 import { NETWORK_PASSPHRASES } from '@ancore/wallet-shared';
-import { Operation, Asset, TransactionBuilder, Account } from '@stellar/stellar-sdk';
+import {
+  Operation,
+  Asset,
+  TransactionBuilder,
+  Account,
+  TimeoutInfinite,
+} from '@stellar/stellar-sdk';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -91,6 +97,8 @@ export function useSendFeeEstimate(
               amount,
             })
           );
+          // Required by stellar-sdk: build() throws without explicit timebounds.
+          txBuilder.setTimeout(TimeoutInfinite);
           const tx = txBuilder.build();
 
           const result = await client.simulateTransaction(tx.toXDR());

@@ -44,6 +44,8 @@ export function parseEnv(
   return result.success ? result.data : (raw as unknown as Env);
 }
 
-// Eagerly parse in non-test environments so main.tsx can `import './lib/env'`
-// as a side-effect. Tests import envSchema / parseEnv directly instead.
-export const env: Env = import.meta.env.MODE === 'test' ? ({} as Env) : parseEnv();
+// Eagerly parse so main.tsx can `import './lib/env'` as a side-effect. Under
+// Vitest the required values come from `test.env` in vitest.config.ts, so the
+// singleton is populated there too and modules reading `env.VITE_*` behave the
+// same as in the browser. Tests that exercise validation import parseEnv directly.
+export const env: Env = parseEnv();

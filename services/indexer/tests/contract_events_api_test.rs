@@ -484,7 +484,6 @@ async fn integration_test_list_events_by_type() {
     }
 }
 
-
 #[tokio::test]
 #[ignore]
 async fn integration_test_get_event_by_id() {
@@ -645,7 +644,6 @@ async fn integration_test_list_types_by_account() {
         "session_key_ttl_refreshed".to_string()
     )));
 }
-
 
 #[tokio::test]
 #[ignore]

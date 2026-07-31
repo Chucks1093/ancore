@@ -47,25 +47,33 @@ export interface BackgroundLogger {
 export function createLogger(prefix: string): BackgroundLogger {
   return {
     info(message, meta?) {
-      meta !== undefined
-        ? console.info(`${prefix} ${message}`, redact(meta))
-        : console.info(`${prefix} ${message}`);
+      if (meta !== undefined) {
+        console.info(`${prefix} ${message}`, redact(meta));
+      } else {
+        console.info(`${prefix} ${message}`);
+      }
     },
     warn(message, meta?) {
-      meta !== undefined
-        ? console.warn(`${prefix} ${message}`, redact(meta))
-        : console.warn(`${prefix} ${message}`);
+      if (meta !== undefined) {
+        console.warn(`${prefix} ${message}`, redact(meta));
+      } else {
+        console.warn(`${prefix} ${message}`);
+      }
     },
     error(message, meta?) {
-      meta !== undefined
-        ? console.error(`${prefix} ${message}`, redact(meta))
-        : console.error(`${prefix} ${message}`);
+      if (meta !== undefined) {
+        console.error(`${prefix} ${message}`, redact(meta));
+      } else {
+        console.error(`${prefix} ${message}`);
+      }
     },
     debug(message, meta?) {
       if (!import.meta.env.DEV) return;
-      meta !== undefined
-        ? console.debug(`${prefix} ${message}`, redact(meta))
-        : console.debug(`${prefix} ${message}`);
+      if (meta !== undefined) {
+        console.debug(`${prefix} ${message}`, redact(meta));
+      } else {
+        console.debug(`${prefix} ${message}`);
+      }
     },
   };
 }
