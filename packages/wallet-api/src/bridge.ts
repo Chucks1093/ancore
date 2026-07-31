@@ -7,8 +7,6 @@
 
 import {
   ANCORE_WALLET_REQUEST,
-  ANCORE_WALLET_RESPONSE,
-  CONTENT_SCRIPT_SOURCE,
   WALLET_API_SOURCE,
   type ExternalApiMethodName,
   type ExternalResponseEnvelope,
@@ -97,4 +95,4 @@ export function __parseResponse(data: unknown): ExternalResponseEnvelope | null 
   return isExternalResponse(data) ? data : null;
 }
 
-export { ANCORE_WALLET_RESPONSE, CONTENT_SCRIPT_SOURCE };
+

@@ -104,10 +104,6 @@ describe('SessionKeys Widget', () => {
   });
 
   it('catches unhandled throw inside WidgetErrorBoundary and allows retry', () => {
-    const ThrowingComponent = () => {
-      throw new Error('Unexpected render crash');
-    };
-
     const onRetry = vi.fn();
 
     render(<SessionKeys error={new Error('Unexpected render crash')} onRetry={onRetry} />);
