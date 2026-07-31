@@ -1,9 +1,12 @@
+import { useEffect, useState } from 'react';
 import { ReadOnlyAccountView } from '../accounts';
 import { useAppGate } from '../config/hooks/useAppGate';
 import { MobileWalletShell } from '../navigation';
 import { ForceUpdateScreen } from '../screens/gate/ForceUpdateScreen';
 import { MaintenanceScreen } from '../screens/gate/MaintenanceScreen';
 import { bootstrapMobileWallet } from './bootstrap';
+import { isDeviceCompromised } from '../security/jailbreak';
+import { JailbreakWarningScreen } from '../screens/JailbreakWarningScreen';
 
 interface Props {
   env: Record<string, string | undefined>;

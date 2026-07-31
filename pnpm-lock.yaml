@@ -331,19 +331,22 @@ importers:
         version: link:../../packages/types
       '@reown/walletkit':
         specifier: ^1.5.5
-        version: 1.5.5(react-native@0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.76.9(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(typescript@5.9.3)(zod@3.25.76)
+        version: 1.5.5(react-native@0.86.0(@babel/core@7.29.7)(@types/react@18.3.29)(react@18.3.1))(typescript@5.9.3)(zod@3.25.76)
       '@walletconnect/types':
         specifier: ^2.23.9
         version: 2.23.9
       '@walletconnect/utils':
         specifier: ^2.23.9
         version: 2.23.9(typescript@5.9.3)(zod@3.25.76)
+      jail-monkey:
+        specifier: ^3.0.0
+        version: 3.0.0
       react:
         specifier: ^18.3.1
         version: 18.3.1
       react-native-biometrics:
         specifier: ^3.0.1
-        version: 3.0.1(react-native@0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.76.9(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))
+        version: 3.0.1(react-native@0.86.0(@babel/core@7.29.7)(@types/react@18.3.29)(react@18.3.1))
       react-native-keychain:
         specifier: ^10.0.0
         version: 10.0.0
@@ -660,7 +663,7 @@ importers:
         version: 29.7.0(@types/node@20.19.41)(ts-node@10.9.2(@types/node@20.19.41)(typescript@5.9.3))
       ts-jest:
         specifier: ^29.4.0
-        version: 29.4.11(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@29.7.0(@babel/core@7.29.7))(esbuild@0.21.5)(jest-util@30.4.1)(jest@29.7.0(@types/node@20.19.41)(ts-node@10.9.2(@types/node@20.19.41)(typescript@5.9.3)))(typescript@5.9.3)
+        version: 29.4.11(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@29.7.0(@babel/core@7.29.7))(jest-util@30.4.1)(jest@29.7.0(@types/node@20.19.41)(ts-node@10.9.2(@types/node@20.19.41)(typescript@5.9.3)))(typescript@5.9.3)
       tsup:
         specifier: ^8.0.0
         version: 8.5.1(jiti@1.21.7)(postcss@8.5.23)(typescript@5.9.3)(yaml@2.9.0)
@@ -992,7 +995,7 @@ importers:
         version: 6.3.4
       ts-jest:
         specifier: ^29.1.0
-        version: 29.4.11(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@29.7.0(@babel/core@7.29.7))(esbuild@0.21.5)(jest-util@30.4.1)(jest@29.7.0(@types/node@20.19.41)(ts-node@10.9.2(@types/node@20.19.41)(typescript@5.9.3)))(typescript@5.9.3)
+        version: 29.4.11(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@29.7.0(@babel/core@7.29.7))(jest-util@30.4.1)(jest@29.7.0(@types/node@20.19.41)(ts-node@10.9.2(@types/node@20.19.41)(typescript@5.9.3)))(typescript@5.9.3)
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@20.19.41)(typescript@5.9.3)
@@ -1086,7 +1089,7 @@ importers:
         version: 6.3.4
       ts-jest:
         specifier: ^29.1.0
-        version: 29.4.11(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@29.7.0(@babel/core@7.29.7))(esbuild@0.21.5)(jest-util@30.4.1)(jest@29.7.0(@types/node@20.19.41)(ts-node@10.9.2(@types/node@20.19.41)(typescript@5.9.3)))(typescript@5.9.3)
+        version: 29.4.11(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@29.7.0(@babel/core@7.29.7))(jest-util@30.4.1)(jest@29.7.0(@types/node@20.19.41)(ts-node@10.9.2(@types/node@20.19.41)(typescript@5.9.3)))(typescript@5.9.3)
       typescript:
         specifier: ^5.3.0
         version: 5.9.3
@@ -6711,6 +6714,9 @@ packages:
 
   jackspeak@3.4.3:
     resolution: {integrity: sha512-OGlZQpz2yfahA/Rd1Y8Cd9SIEsqvXkLVoSw/cgwhnhFMDbsQFeZYoJJ7bIZBS9BcamUW96asq/npPWugM+RQBw==}
+
+  jail-monkey@3.0.0:
+    resolution: {integrity: sha512-EB382zJRHzElFPEucuafU3cxPJn5U8QgaQHzY09J8ly1eElG4EvNBEWu+0okS7Ro5Jvc8B/7lB+6mNCKjWjDGg==}
 
   jake@10.9.4:
     resolution: {integrity: sha512-wpHYzhxiVQL+IV05BLE2Xn34zW1S223hvjtqk0+gsPrwd/8JNLXJgZZM/iPFsYc1xyphF+6M6EvdE5E9MBGkDA==}
@@ -12820,7 +12826,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@react-native/community-cli-plugin@0.86.0(@react-native/metro-config@0.76.9(@babel/core@7.29.7))':
+  '@react-native/community-cli-plugin@0.86.0':
     dependencies:
       '@react-native/dev-middleware': 0.86.0
       debug: 4.4.3
@@ -12829,8 +12835,6 @@ snapshots:
       metro-config: 0.84.4
       metro-core: 0.84.4
       semver: 7.8.1
-    optionalDependencies:
-      '@react-native/metro-config': 0.76.9(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -12932,24 +12936,24 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.29
 
-  '@react-native/virtualized-lists@0.86.0(@types/react@18.3.29)(react-native@0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.76.9(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1)':
+  '@react-native/virtualized-lists@0.86.0(@types/react@18.3.29)(react-native@0.86.0(@babel/core@7.29.7)(@types/react@18.3.29)(react@18.3.1))(react@18.3.1)':
     dependencies:
       invariant: 2.2.4
       nullthrows: 1.1.1
       react: 18.3.1
-      react-native: 0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.76.9(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1)
+      react-native: 0.86.0(@babel/core@7.29.7)(@types/react@18.3.29)(react@18.3.1)
     optionalDependencies:
       '@types/react': 18.3.29
 
   '@remix-run/router@1.23.2': {}
 
-  '@reown/walletkit@1.5.5(react-native@0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.76.9(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(typescript@5.9.3)(zod@3.25.76)':
+  '@reown/walletkit@1.5.5(react-native@0.86.0(@babel/core@7.29.7)(@types/react@18.3.29)(react@18.3.1))(typescript@5.9.3)(zod@3.25.76)':
     dependencies:
       '@walletconnect/core': 2.23.9(typescript@5.9.3)(zod@3.25.76)
       '@walletconnect/jsonrpc-provider': 1.0.14
       '@walletconnect/jsonrpc-utils': 1.0.8
       '@walletconnect/logger': 3.0.2
-      '@walletconnect/pay': 1.0.8(react-native@0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.76.9(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(typescript@5.9.3)(zod@3.25.76)
+      '@walletconnect/pay': 1.0.8(react-native@0.86.0(@babel/core@7.29.7)(@types/react@18.3.29)(react@18.3.1))(typescript@5.9.3)(zod@3.25.76)
       '@walletconnect/sign-client': 2.23.9(typescript@5.9.3)(zod@3.25.76)
       '@walletconnect/types': 2.23.9
       '@walletconnect/utils': 2.23.9(typescript@5.9.3)(zod@3.25.76)
@@ -14346,14 +14350,14 @@ snapshots:
       '@walletconnect/safe-json': 1.0.2
       pino: 10.0.0
 
-  '@walletconnect/pay@1.0.8(react-native@0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.76.9(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(typescript@5.9.3)(zod@3.25.76)':
+  '@walletconnect/pay@1.0.8(react-native@0.86.0(@babel/core@7.29.7)(@types/react@18.3.29)(react@18.3.1))(typescript@5.9.3)(zod@3.25.76)':
     dependencies:
       '@walletconnect/logger': 3.0.2
       '@walletconnect/types': 2.23.9
       '@walletconnect/utils': 2.23.9(typescript@5.9.3)(zod@3.25.76)
       brotli: 1.3.3
     optionalDependencies:
-      react-native: 0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.76.9(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1)
+      react-native: 0.86.0(@babel/core@7.29.7)(@types/react@18.3.29)(react@18.3.1)
     transitivePeerDependencies:
       - '@azure/app-configuration'
       - '@azure/cosmos'
@@ -16971,6 +16975,8 @@ snapshots:
     optionalDependencies:
       '@pkgjs/parseargs': 0.11.0
 
+  jail-monkey@3.0.0: {}
+
   jake@10.9.4:
     dependencies:
       async: 3.2.6
@@ -19067,9 +19073,9 @@ snapshots:
     dependencies:
       react-native: 0.76.9(@babel/core@7.29.7)(@babel/preset-env@7.29.7(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1)
 
-  react-native-biometrics@3.0.1(react-native@0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.76.9(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1)):
+  react-native-biometrics@3.0.1(react-native@0.86.0(@babel/core@7.29.7)(@types/react@18.3.29)(react@18.3.1)):
     dependencies:
-      react-native: 0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.76.9(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1)
+      react-native: 0.86.0(@babel/core@7.29.7)(@types/react@18.3.29)(react@18.3.1)
 
   react-native-crypto@2.2.1(react-native-randombytes@3.6.2):
     dependencies:
@@ -19156,15 +19162,15 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  react-native@0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.76.9(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1):
+  react-native@0.86.0(@babel/core@7.29.7)(@types/react@18.3.29)(react@18.3.1):
     dependencies:
       '@react-native/assets-registry': 0.86.0
       '@react-native/codegen': 0.86.0(@babel/core@7.29.7)
-      '@react-native/community-cli-plugin': 0.86.0(@react-native/metro-config@0.76.9(@babel/core@7.29.7))
+      '@react-native/community-cli-plugin': 0.86.0
       '@react-native/gradle-plugin': 0.86.0
       '@react-native/js-polyfills': 0.86.0
       '@react-native/normalize-colors': 0.86.0
-      '@react-native/virtualized-lists': 0.86.0(@types/react@18.3.29)(react-native@0.86.0(@babel/core@7.29.7)(@react-native/metro-config@0.76.9(@babel/core@7.29.7))(@types/react@18.3.29)(react@18.3.1))(react@18.3.1)
+      '@react-native/virtualized-lists': 0.86.0(@types/react@18.3.29)(react-native@0.86.0(@babel/core@7.29.7)(@types/react@18.3.29)(react@18.3.1))(react@18.3.1)
       abort-controller: 3.0.0
       anser: 1.4.10
       ansi-regex: 5.0.1
@@ -20175,27 +20181,6 @@ snapshots:
 
   ts-interface-checker@0.1.13: {}
 
-  ts-jest@29.4.11(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@29.7.0(@babel/core@7.29.7))(esbuild@0.21.5)(jest-util@30.4.1)(jest@29.7.0(@types/node@20.19.41)(ts-node@10.9.2(@types/node@20.19.41)(typescript@5.9.3)))(typescript@5.9.3):
-    dependencies:
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      handlebars: 4.7.9
-      jest: 29.7.0(@types/node@20.19.41)(ts-node@10.9.2(@types/node@20.19.41)(typescript@5.9.3))
-      json5: 2.2.3
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.8.1
-      type-fest: 4.41.0
-      typescript: 5.9.3
-      yargs-parser: 21.1.1
-    optionalDependencies:
-      '@babel/core': 7.29.7
-      '@jest/transform': 30.4.1
-      '@jest/types': 30.4.1
-      babel-jest: 29.7.0(@babel/core@7.29.7)
-      esbuild: 0.21.5
-      jest-util: 30.4.1
-
   ts-jest@29.4.11(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@29.7.0(@babel/core@7.29.7))(esbuild@0.21.5)(jest-util@30.4.1)(jest@29.7.0(@types/node@25.9.1)(ts-node@10.9.2(@types/node@25.9.1)(typescript@5.9.3)))(typescript@5.9.3):
     dependencies:
       bs-logger: 0.2.6
@@ -20215,6 +20200,26 @@ snapshots:
       '@jest/types': 30.4.1
       babel-jest: 29.7.0(@babel/core@7.29.7)
       esbuild: 0.21.5
+      jest-util: 30.4.1
+
+  ts-jest@29.4.11(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@29.7.0(@babel/core@7.29.7))(jest-util@30.4.1)(jest@29.7.0(@types/node@20.19.41)(ts-node@10.9.2(@types/node@20.19.41)(typescript@5.9.3)))(typescript@5.9.3):
+    dependencies:
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      handlebars: 4.7.9
+      jest: 29.7.0(@types/node@20.19.41)(ts-node@10.9.2(@types/node@20.19.41)(typescript@5.9.3))
+      json5: 2.2.3
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.8.1
+      type-fest: 4.41.0
+      typescript: 5.9.3
+      yargs-parser: 21.1.1
+    optionalDependencies:
+      '@babel/core': 7.29.7
+      '@jest/transform': 30.4.1
+      '@jest/types': 30.4.1
+      babel-jest: 29.7.0(@babel/core@7.29.7)
       jest-util: 30.4.1
 
   ts-node@10.9.2(@types/node@20.19.41)(typescript@5.9.3):
