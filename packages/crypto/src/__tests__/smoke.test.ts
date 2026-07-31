@@ -26,6 +26,8 @@ const EXPECTED_EXPORTS = [
   'getEnglishWordlist',
 
   'MnemonicValidationError',
+  'UnsupportedMnemonicLanguageError',
+  'SUPPORTED_MNEMONIC_LANGUAGE',
   'deriveKeypairFromMnemonic',
   'signPayload',
   'signTransaction',
