@@ -17,11 +17,13 @@ import { useSendTransaction } from '../hooks/useSendTransaction';
 import { useSendFeeEstimate } from '../hooks/useSendFeeEstimate';
 import { useWalletConnection } from '../hooks/useWalletConnection';
 
+import { env } from '../lib/env';
+
 // ---------------------------------------------------------------------------
 // Feature flag
 // ---------------------------------------------------------------------------
 
-const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+const DEMO_MODE = env.VITE_DEMO_MODE === 'true';
 
 // ---------------------------------------------------------------------------
 // Types
