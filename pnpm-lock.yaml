@@ -417,6 +417,9 @@ importers:
       '@ancore/wallet-api':
         specifier: workspace:*
         version: link:../../packages/wallet-api
+      '@ancore/wallet-shared':
+        specifier: workspace:*
+        version: link:../../packages/wallet-shared
       '@noble/hashes':
         specifier: '1'
         version: 1.8.0
@@ -1032,6 +1035,9 @@ importers:
       '@ancore/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@ancore/wallet-shared':
+        specifier: workspace:*
+        version: link:../../packages/wallet-shared
       '@noble/ed25519':
         specifier: ^2.0.0
         version: 2.3.0

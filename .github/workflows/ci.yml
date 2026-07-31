@@ -109,8 +109,12 @@ jobs:
         run: cargo audit
 
       - name: Cargo audit indexer
-        working-directory: ./services/indexer
-        run: cargo audit
+        # Cargo.lock for the indexer lives at the `services/` workspace root and is
+        # gitignored, so generate it there before auditing.
+        working-directory: ./services
+        run: |
+          cargo generate-lockfile
+          cargo audit
 
   install-scripts:
     name: Install Script Policy

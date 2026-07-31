@@ -7,6 +7,10 @@ import { truncateAddress } from '@/utils/address';
  * SuccessScreen props
  */
 export interface SuccessScreenProps {
+  publicKey: string;
+  contractId?: string;
+  onComplete: () => void;
+}
 
 /**
  * SuccessScreen - Shows successful account creation

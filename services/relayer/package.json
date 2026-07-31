@@ -19,6 +19,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@ancore/stellar": "workspace:*",
+    "@ancore/wallet-shared": "workspace:*",
     "@ancore/test-fixtures": "workspace:*",
     "@ancore/types": "workspace:*",
     "@opentelemetry/api": "^1.9.1",

@@ -13,12 +13,26 @@ interface Props {
 }
 
 export const MobileWalletApp = ({ env }: Props) => {
+  const [isCompromised, setIsCompromised] = useState(false);
+  const [warningBypassed, setWarningBypassed] = useState(false);
+
+  useEffect(() => {
+    setIsCompromised(isDeviceCompromised());
+  }, []);
+
   const bootstrap = bootstrapMobileWallet(env);
   const gate = useAppGate({
     configUrl: bootstrap.environment.remoteConfigUrl,
     appVersion: bootstrap.environment.appVersion,
     bypass: bootstrap.environment.remoteConfigBypass,
   });
+
+  // Security gate takes priority over every other screen: a jailbroken or rooted
+  // device can read the keychain, so the wallet must not render on one.
+  // JailbreakWarningScreen only surfaces the bypass control under __DEV__.
+  if (isCompromised && !warningBypassed) {
+    return <JailbreakWarningScreen onContinueAnyway={() => setWarningBypassed(true)} />;
+  }
 
   if (gate.isLoading) {
     return <p aria-live="polite">Loading…</p>;
