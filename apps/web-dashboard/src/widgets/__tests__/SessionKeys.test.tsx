@@ -1,6 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import React from 'react';
 import { SessionKeys, SessionKeysPanel } from '../SessionKeysPanel';
 
 // Mock lucide-react to avoid issues with SVG rendering in tests

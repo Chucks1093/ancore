@@ -72,18 +72,18 @@ export function InvoiceDetail({ invoice, onPay, onOpen, onCancel }: InvoiceDetai
         <div className="space-y-3 text-sm">
           <div className="flex justify-between py-2 border-b">
             <span className="text-muted-foreground">Created</span>
-            <span>{formatTime(new Date(invoice.createdAt).getTime())}</span>
+            <span>{formatTime(new Date(invoice.createdAt))}</span>
           </div>
           {invoice.dueDate && (
             <div className="flex justify-between py-2 border-b">
               <span className="text-muted-foreground">Due Date</span>
-              <span>{formatTime(new Date(invoice.dueDate).getTime())}</span>
+              <span>{formatTime(new Date(invoice.dueDate))}</span>
             </div>
           )}
           {invoice.paidAt && (
             <div className="flex justify-between py-2 border-b">
               <span className="text-muted-foreground">Paid At</span>
-              <span>{formatTime(new Date(invoice.paidAt).getTime())}</span>
+              <span>{formatTime(new Date(invoice.paidAt))}</span>
             </div>
           )}
           {invoice.paymentTransactionId && (

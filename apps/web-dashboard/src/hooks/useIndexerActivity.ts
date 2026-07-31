@@ -73,10 +73,7 @@ export function useIndexerActivity(accountId: string): UseIndexerActivityReturn 
             amount: parseFloat(tx.amount),
             timestamp: new Date(tx.timestamp),
           }))
-          .filter(
-            (tx): tx is Transaction =>
-              !Number.isNaN(tx.amount) && !Number.isNaN(tx.timestamp.getTime())
-          );
+          .filter((tx) => !Number.isNaN(tx.amount) && !Number.isNaN(tx.timestamp.getTime()));
 
         if (cursor) {
           setItems((prev) => [...prev, ...transformedItems]);

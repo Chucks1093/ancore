@@ -153,7 +153,7 @@ describe('fetchStatementRows', () => {
       fetcher as unknown as typeof fetch
     );
 
-    const requestedUrl = new URL(fetcher.mock.calls[0][0]);
+    const requestedUrl = new URL((fetcher.mock.calls as unknown as string[][])[0][0]);
     expect(requestedUrl.pathname).toContain(
       '/api/v1/accounts/GABC1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/statements/rows'
     );

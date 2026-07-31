@@ -6,6 +6,7 @@ import {
   Asset,
   TransactionBuilder,
   Account,
+  Memo,
   TimeoutInfinite,
 } from '@stellar/stellar-sdk';
 import type { Transaction } from '@stellar/stellar-sdk';
@@ -99,7 +100,7 @@ export class WalletApiSendStrategy implements SendStrategy {
     });
     txBuilder.addOperation(this.buildPaymentOp(params));
     if (params.memo) {
-      txBuilder.addMemo(TransactionBuilder.Memo.text(params.memo));
+      txBuilder.addMemo(Memo.text(params.memo));
     }
     const unsignedTx = txBuilder.build();
     const unsignedXdr = unsignedTx.toXDR();

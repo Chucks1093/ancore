@@ -26,7 +26,7 @@ describe('env schema', () => {
     });
 
     it('defaults VITE_STATEMENT_PDF_EXPORT to "false" when omitted', () => {
-      const rest = { ...VALID_ENV };
+      const rest: Partial<typeof VALID_ENV> = { ...VALID_ENV };
       delete rest.VITE_STATEMENT_PDF_EXPORT;
       const result = envSchema.safeParse(rest);
       expect(result.success).toBe(true);
@@ -90,14 +90,14 @@ describe('env schema', () => {
     });
 
     it('fails when VITE_RELAYER_URL is missing', () => {
-      const rest = { ...VALID_ENV };
+      const rest: Partial<typeof VALID_ENV> = { ...VALID_ENV };
       delete rest.VITE_RELAYER_URL;
       const result = envSchema.safeParse(rest);
       expect(result.success).toBe(false);
     });
 
     it('fails when VITE_INDEXER_BASE_URL is missing', () => {
-      const rest = { ...VALID_ENV };
+      const rest: Partial<typeof VALID_ENV> = { ...VALID_ENV };
       delete rest.VITE_INDEXER_BASE_URL;
       const result = envSchema.safeParse(rest);
       expect(result.success).toBe(false);

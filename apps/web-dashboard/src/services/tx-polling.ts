@@ -1,4 +1,4 @@
-import { NETWORK_PASSPHRASES, DEFAULT_HORIZON_URLS } from '@ancore/wallet-shared';
+import { DEFAULT_HORIZON_URLS } from '@ancore/wallet-shared';
 
 // ---------------------------------------------------------------------------
 // Types
