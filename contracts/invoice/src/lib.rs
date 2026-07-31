@@ -8,7 +8,7 @@
 
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, symbol_short, token, Address, BytesN,
-    Env, String, Symbol, Vec,
+    Env, IntoVal, String, Symbol, Vec,
 };
 
 // ---------------------------------------------------------------------------
@@ -69,7 +69,7 @@ pub struct Invoice {
     pub opened_at: Option<u64>,
     pub paid_at: Option<u64>,
     /// The Stellar transaction hash that completed payment.
-    pub payment_tx: Option<BytesN<32>>,
+    pub payment_tx: Option<soroban_sdk::Bytes>,
     pub cancelled_at: Option<u64>,
     pub expired_at: Option<u64>,
     /// Nonce for unique ID derivation when multiple invoices share same params.
@@ -226,17 +226,17 @@ impl InvoiceContract {
         env.storage().instance().set(&KEY_COUNTER, &nonce);
 
         // Content-addressed ID
-        let id = env.crypto().sha256(
-            &(
-                creator.clone(),
-                recipient.clone(),
-                amount,
-                asset.clone(),
-                nonce,
-                env.ledger().timestamp(),
-            )
-            .into_val(&env),
-        );
+        let mut payload = soroban_sdk::Bytes::new(&env);
+        use soroban_sdk::xdr::ToXdr;
+        payload.append(&creator.clone().to_xdr(&env));
+        payload.append(&recipient.clone().to_xdr(&env));
+        payload.append(&amount.to_xdr(&env));
+        payload.append(&asset.clone().to_xdr(&env));
+        payload.append(&nonce.to_xdr(&env));
+        payload.append(&env.ledger().timestamp().to_xdr(&env));
+        
+        let id_hash = env.crypto().sha256(&payload);
+        let id: BytesN<32> = id_hash.into_val(&env);
 
         let now = env.ledger().timestamp();
         let invoice = Invoice {
@@ -357,7 +357,7 @@ impl InvoiceContract {
 
         invoice.status = InvoiceStatus::Paid;
         invoice.paid_at = Some(now);
-        invoice.payment_tx = Some(payment_tx.clone());
+        invoice.payment_tx = Some(payment_tx.clone().into());
         invoice.updated_at = now;
 
         env.storage()
@@ -457,6 +457,29 @@ impl InvoiceContract {
             .unwrap_or_else(|| Vec::new(&env))
     }
 
+    /// Returns all resolved invoices where this account is either the creator or the recipient.
+    pub fn get_by_account(env: Env, account: Address) -> Vec<Invoice> {
+        let mut invoices = Vec::new(&env);
+        let creator_ids = Self::list_by_creator(env.clone(), account.clone());
+        let recipient_ids = Self::list_by_recipient(env.clone(), account.clone());
+
+        for id in creator_ids.clone().into_iter() {
+            if let Ok(inv) = Self::get_invoice(&env, &id) {
+                invoices.push_back(inv);
+            }
+        }
+        
+        for id in recipient_ids.into_iter() {
+            if !creator_ids.contains(&id) {
+                if let Ok(inv) = Self::get_invoice(&env, &id) {
+                    invoices.push_back(inv);
+                }
+            }
+        }
+        
+        invoices
+    }
+
     // ── Internal ─────────────────────────────────────────────────────────────
 
     fn get_invoice(env: &Env, id: &BytesN<32>) -> Result<Invoice, InvoiceError> {
@@ -500,8 +523,7 @@ mod test {
                 &None,
                 &Some(due_date),
                 &None,
-            )
-            .unwrap();
+            );
 
         // Advance the ledger well past the default 30-day bump (INSTANCE_BUMP_AMOUNT)
         // that would apply without a due-date-aware extension.
@@ -509,9 +531,74 @@ mod test {
             li.sequence_number = li.sequence_number.saturating_add(40 * DAY_IN_LEDGERS);
         });
 
-        let invoice = client.get(&id).unwrap();
+        let invoice = client.get(&id);
         assert_eq!(invoice.id, id);
         // Invoice starts in Draft; it was never opened, so status stays Draft.
         assert_eq!(invoice.status, InvoiceStatus::Draft);
+    }
+
+    #[test]
+    fn test_get_by_account() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract_id = env.register_contract(None, InvoiceContract);
+        let client = InvoiceContractClient::new(&env, &contract_id);
+
+        let account1 = Address::generate(&env);
+        let account2 = Address::generate(&env);
+        let account3 = Address::generate(&env);
+        let asset = Address::generate(&env);
+
+        let due_date = env.ledger().timestamp() + 90 * 24 * 60 * 60;
+
+        let id1 = client
+            .create(
+                &account1,
+                &account2,
+                &1000i128,
+                &asset,
+                &None,
+                &Some(due_date),
+                &None,
+            );
+
+        let id2 = client
+            .create(
+                &account2,
+                &account3,
+                &500i128,
+                &asset,
+                &None,
+                &Some(due_date),
+                &None,
+            );
+
+        let id3 = client
+            .create(
+                &account1,
+                &account1,
+                &200i128,
+                &asset,
+                &None,
+                &Some(due_date),
+                &None,
+            );
+
+        let invs1 = client.get_by_account(&account1);
+        assert_eq!(invs1.len(), 2);
+        let mut has_id1 = false;
+        let mut has_id3 = false;
+        for inv in invs1.iter() {
+            if inv.id == id1 { has_id1 = true; }
+            if inv.id == id3 { has_id3 = true; }
+        }
+        assert!(has_id1 && has_id3);
+
+        let invs2 = client.get_by_account(&account2);
+        assert_eq!(invs2.len(), 2);
+
+        let invs3 = client.get_by_account(&account3);
+        assert_eq!(invs3.len(), 1);
+        assert_eq!(invs3.get(0).unwrap().id, id2);
     }
 }
