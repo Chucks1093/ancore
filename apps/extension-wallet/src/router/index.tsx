@@ -83,13 +83,13 @@ function PopupFrame({ children }: { children: React.ReactNode }) {
 }
 
 function RootRedirect() {
-  const { authState } = useExtensionAuth();
+  const { authState, isUnlocked } = useExtensionAuth();
 
   if (!authState.hasOnboarded) {
     return <Navigate replace to="/onboarding" />;
   }
 
-  return <Navigate replace to={authState.isUnlocked ? '/home' : '/unlock'} />;
+  return <Navigate replace to={isUnlocked ? '/home' : '/unlock'} />;
 }
 
 function ProtectedLayout() {

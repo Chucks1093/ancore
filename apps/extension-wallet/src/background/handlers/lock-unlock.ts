@@ -8,7 +8,6 @@ import {
   recordUnlockFailure,
   saveUnlockAttemptState,
 } from '@/background/unlock-rate-limit';
-import { setChromeLocalStorage } from '../chrome-storage';
 import {
   clearUnlockSession,
   persistUnlockSession,
@@ -23,15 +22,6 @@ export function registerLockUnlockHandlers(): void {
       setBackgroundSessionUnlocked(false);
       getSharedStorageManager().lock();
       await clearUnlockSession();
-
-      const authState = readAuthState();
-      await setChromeLocalStorage(
-        'ancore_extension_auth',
-        JSON.stringify({
-          ...authState,
-          isUnlocked: false,
-        })
-      );
 
       console.info(`${logPrefix} wallet locked`);
       return { success: true };
@@ -85,14 +75,6 @@ export function registerLockUnlockHandlers(): void {
 
       await clearUnlockAttemptState();
       await persistUnlockSession();
-
-      await setChromeLocalStorage(
-        'ancore_extension_auth',
-        JSON.stringify({
-          ...authState,
-          isUnlocked: true,
-        })
-      );
 
       console.info(`${logPrefix} wallet unlocked`);
       return { success: true };
