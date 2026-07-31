@@ -21,15 +21,15 @@ is its entry screen).
 
 See [`src/index.ts`](./src/index.ts) for the full surface. The main groups:
 
-| Export area                                        | Examples                                                            |
-| ---------------------------------------------------- | --------------------------------------------------------------------- |
-| Navigation                                          | `OnboardingNavigator`, `OnboardingNavigatorTestHarness`              |
-| Screens                                             | `HistoryScreen`, `WCPairingScreen`                                   |
-| Config                                              | `loadMobileWalletEnvironment`, `loadMobileWalletEnvironmentFromEnv`, `resolveServiceUrls` |
-| Security                                            | Biometric adapters, `MobileSecureVault`, lockout manager (`./src/security`) |
-| Storage                                             | Keychain-backed secure store adapter (`./src/storage`)               |
-| WalletConnect                                       | `WalletKitProvider`, `useWalletConnect`, `createStellarRpcHandlers`, `SessionApprovalSheet`, `SignAuthEntryApprovalSheet` |
-| Accounts / SDK                                      | `./src/accounts`, `./src/sdk`                                        |
+| Export area    | Examples                                                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Navigation     | `OnboardingNavigator`, `OnboardingNavigatorTestHarness`                                                                   |
+| Screens        | `HistoryScreen`, `WCPairingScreen`                                                                                        |
+| Config         | `loadMobileWalletEnvironment`, `loadMobileWalletEnvironmentFromEnv`, `resolveServiceUrls`                                 |
+| Security       | Biometric adapters, `MobileSecureVault`, lockout manager (`./src/security`)                                               |
+| Storage        | Keychain-backed secure store adapter (`./src/storage`)                                                                    |
+| WalletConnect  | `WalletKitProvider`, `useWalletConnect`, `createStellarRpcHandlers`, `SessionApprovalSheet`, `SignAuthEntryApprovalSheet` |
+| Accounts / SDK | `./src/accounts`, `./src/sdk`                                                                                             |
 
 Host apps (currently `apps/mobile-app`) import from `@ancore/mobile-wallet`
 and provide the React Native shell, native modules, and build config.

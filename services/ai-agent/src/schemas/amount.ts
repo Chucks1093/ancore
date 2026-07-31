@@ -15,9 +15,12 @@ export const amountStringSchema = z
   .refine((value) => Number(value) <= MAX_AMOUNT_VALUE, {
     message: 'Amount is too large',
   })
-  .refine((value) => {
-    const [, fractionalPart = ''] = value.split('.');
-    return fractionalPart.length <= 7;
-  }, {
-    message: 'Amount must not exceed 7 decimal places',
-  });
+  .refine(
+    (value) => {
+      const [, fractionalPart = ''] = value.split('.');
+      return fractionalPart.length <= 7;
+    },
+    {
+      message: 'Amount must not exceed 7 decimal places',
+    }
+  );

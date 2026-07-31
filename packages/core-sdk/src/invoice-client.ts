@@ -1,5 +1,5 @@
 import type { Invoice, CreateInvoiceInput, InvoiceStatus } from '@ancore/types';
-import { resolveRelayerBaseUrl } from './resolve-relayer-base-url';
+import { resolveRelayerBaseUrl } from './scheduler-client';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -74,14 +74,14 @@ export class InvoiceClient {
   async listByCreator(creatorAddress: string): Promise<ListInvoicesResult> {
     return this.request<ListInvoicesResult>(
       'GET',
-      `/invoices?creator=${encodeURIComponent(creatorAddress)}`,
+      `/invoices?creator=${encodeURIComponent(creatorAddress)}`
     );
   }
 
   async listByRecipient(recipientAddress: string): Promise<ListInvoicesResult> {
     return this.request<ListInvoicesResult>(
       'GET',
-      `/invoices?recipient=${encodeURIComponent(recipientAddress)}`,
+      `/invoices?recipient=${encodeURIComponent(recipientAddress)}`
     );
   }
 
@@ -119,7 +119,8 @@ export class InvoiceClient {
    * Useful for email / messaging.
    */
   buildPaymentLink(invoiceId: string, appBaseUrl?: string): string {
-    const base = appBaseUrl ?? (typeof window !== 'undefined' ? window.location.origin : '');
+    const locationOrigin = (globalThis as { location?: { origin?: string } }).location?.origin;
+    const base = appBaseUrl ?? locationOrigin ?? '';
     return `${base}/invoices/${invoiceId}/pay`;
   }
 
@@ -128,7 +129,7 @@ export class InvoiceClient {
   private async request<T>(
     method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
     path: string,
-    body?: unknown,
+    body?: unknown
   ): Promise<T> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -165,7 +166,7 @@ export class InvoiceClient {
 export class InvoiceClientError extends Error {
   constructor(
     message: string,
-    public readonly statusCode: number,
+    public readonly statusCode: number
   ) {
     super(message);
     this.name = 'InvoiceClientError';

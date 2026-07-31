@@ -139,6 +139,7 @@ async fn main() -> anyhow::Result<()> {
             let sink = ancore_indexer::ingest::PostgresEventSink::new(pool.clone());
             let checkpoint_store =
                 ancore_indexer::ingest::PostgresCheckpointStore::new(pool.clone());
+            let dead_letters = ancore_indexer::ingest::PostgresDeadLetterStore::new(pool.clone());
 
             let mut worker = ancore_indexer::ingest::IngestWorker::with_checkpoint_store(
                 ancore_indexer::ingest::WorkerConfig::default(),
@@ -146,6 +147,7 @@ async fn main() -> anyhow::Result<()> {
                 sink,
                 checkpoint_store,
             )
+            .with_dead_letter_store(dead_letters)
             .bootstrap_from_store()
             .await?;
 
@@ -163,6 +165,7 @@ async fn main() -> anyhow::Result<()> {
                                     normalised = stats.normalised,
                                     persisted = stats.persisted,
                                     errors = stats.errors,
+                                    dead_lettered = stats.dead_lettered,
                                     "ingest batch complete"
                                 );
                             }
