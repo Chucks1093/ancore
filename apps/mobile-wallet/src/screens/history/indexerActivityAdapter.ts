@@ -165,15 +165,28 @@ export function createIndexerActivityAdapter(
         contractEventsUrl.searchParams.set('cursor_after', params.cursor);
       }
 
+      // The contract-events feed is optional: never let its failure break the
+      // page load. An inline `.catch()` is not enough — if `fetch` throws
+      // synchronously the array literal never finishes evaluating, so
+      // Promise.all is never reached and the activity request's rejection is
+      // left unhandled (which crashes the process).
+      const fetchContractEvents = async (): Promise<Response | null> => {
+        try {
+          return await fetch(contractEventsUrl.toString(), {
+            signal: params.signal,
+            headers: { Accept: 'application/json' },
+          });
+        } catch {
+          return null;
+        }
+      };
+
       const [activityResponse, contractEventsResponse] = await Promise.all([
         fetch(activityUrl.toString(), {
           signal: params.signal,
           headers: { Accept: 'application/json' },
         }),
-        fetch(contractEventsUrl.toString(), {
-          signal: params.signal,
-          headers: { Accept: 'application/json' },
-        }).catch(() => null),
+        fetchContractEvents(),
       ]);
 
       if (!activityResponse.ok) {

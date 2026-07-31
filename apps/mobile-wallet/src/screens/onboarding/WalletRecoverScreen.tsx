@@ -46,18 +46,13 @@ export function WalletRecoverScreen({ onBack = noop, onCancel = noop, onContinue
       </label>
 
       <div className="flex gap-3">
-        <button aria-label="Go back" onClick={onBack} type="button">
+        <button onClick={onBack} type="button">
           Back
         </button>
-        <button aria-label="Cancel wallet recovery" onClick={onCancel} type="button">
+        <button onClick={onCancel} type="button">
           Cancel
         </button>
-        <button
-          aria-label="Continue wallet recovery"
-          disabled={!canContinue}
-          onClick={onContinue}
-          type="button"
-        >
+        <button disabled={!canContinue} onClick={onContinue} type="button">
           Continue
         </button>
       </div>
