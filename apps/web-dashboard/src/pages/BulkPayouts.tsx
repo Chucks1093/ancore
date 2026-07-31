@@ -84,7 +84,7 @@ export function BulkPayoutsPage() {
     <div className="space-y-6">
       <section>
         <h2 className="text-2xl font-semibold">Bulk Payouts</h2>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-muted-foreground">
           Import recipient and amount rows, review validation results, then execute the approved
           payout batch.
         </p>
@@ -95,7 +95,7 @@ export function BulkPayoutsPage() {
           <CardTitle>CSV import</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 px-4 py-6 text-sm text-slate-600 hover:bg-slate-50">
+          <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-dashed border-border px-4 py-6 text-sm text-muted-foreground transition-colors hover:bg-accent">
             <Upload className="h-4 w-4" />
             <span>{fileName || 'Upload payout CSV'}</span>
             <input
@@ -107,7 +107,7 @@ export function BulkPayoutsPage() {
           </label>
 
           {fileError && (
-            <p className="flex items-center gap-2 text-sm text-red-600">
+            <p className="flex items-center gap-2 text-sm text-destructive">
               <AlertCircle className="h-4 w-4" />
               {fileError}
             </p>
@@ -128,11 +128,11 @@ export function BulkPayoutsPage() {
         </CardHeader>
         <CardContent>
           {parseResult.rows.length === 0 ? (
-            <p className="text-sm text-slate-500">No payout rows imported.</p>
+            <p className="text-sm text-muted-foreground">No payout rows imported.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[820px] text-left text-sm">
-                <thead className="border-b border-slate-200 text-xs uppercase text-slate-500">
+                <thead className="border-b border-border text-xs uppercase text-muted-foreground">
                   <tr>
                     <th className="py-2 pr-4">Line</th>
                     <th className="py-2 pr-4">Recipient</th>
@@ -154,7 +154,7 @@ export function BulkPayoutsPage() {
       </Card>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-muted-foreground">
           {parseResult.invalidRows.length > 0
             ? 'Fix invalid rows before executing this batch.'
             : 'Validated batches execute sequentially through the payout queue.'}
@@ -184,15 +184,15 @@ export function BulkPayoutsPage() {
             </div>
 
             {failedExecutions.length === 0 ? (
-              <p className="flex items-center gap-2 text-sm text-green-700">
+              <p className="flex items-center gap-2 text-sm text-success">
                 <CheckCircle2 className="h-4 w-4" />
                 All payout rows completed.
               </p>
             ) : (
               <div className="space-y-2">
-                <h3 className="text-sm font-medium text-slate-900">Failed-row report</h3>
+                <h3 className="text-sm font-medium text-foreground">Failed-row report</h3>
                 {failedExecutions.map((result) => (
-                  <p key={result.row.id} className="text-sm text-red-600">
+                  <p key={result.row.id} className="text-sm text-destructive">
                     Line {result.row.lineNumber}: {result.error}
                   </p>
                 ))}

@@ -49,8 +49,6 @@ import { useAccountStore } from '../stores/account';
 import { resolveIndexerUrl } from '../config/urls';
 import { createIndexerActivityAdapter } from '../adapters/indexerActivityAdapter';
 import type { IndexerActivityRecord } from '../adapters/indexerActivityAdapter';
-import { NetworkBadge } from '../components/NetworkBadge';
-import { useSettingsStore } from '../stores/settings';
 
 const APP_TITLE = 'Ancore Extension';
 
@@ -107,7 +105,9 @@ function RootRedirect() {
 
 function ProtectedLayout() {
   const location = useLocation();
-  const isImmersiveRoute = ['/send', '/receive', '/sign-transaction'].includes(location.pathname);
+  const isImmersiveRoute = ['/send', '/receive', '/sign-transaction', '/session-keys'].includes(
+    location.pathname
+  );
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -135,28 +135,28 @@ function PageScaffold({
   rightAction?: React.ReactNode;
 }) {
   const navigate = useNavigate();
-  const network = useSettingsStore((s) => s.network);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="px-5 pb-4 pt-5">
-        <div className="flex items-center justify-between">
-          {backTo ? (
-            <button
-              aria-label="Go back"
-              className="wallet-icon-btn h-9 w-9 bg-card"
-              onClick={() => navigate(backTo)}
-              type="button"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-          ) : (
-            <span className="h-9 w-9" />
-          )}
-          <NetworkBadge network={network} />
-          {rightAction ?? <span className="h-9 w-9" />}
-        </div>
-        {eyebrow ? <p className="wallet-kicker mt-6">{eyebrow}</p> : null}
+        {backTo || rightAction ? (
+          <div className="mb-6 flex items-center justify-between">
+            {backTo ? (
+              <button
+                aria-label="Go back"
+                className="wallet-icon-btn h-9 w-9 bg-card"
+                onClick={() => navigate(backTo)}
+                type="button"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+            ) : (
+              <span />
+            )}
+            {rightAction}
+          </div>
+        ) : null}
+        {eyebrow ? <p className="wallet-kicker">{eyebrow}</p> : null}
         <h1 className="mt-2 text-[26px] font-semibold leading-tight tracking-[-0.03em]">{title}</h1>
         <p className="mt-1.5 max-w-[310px] text-[13px] leading-5 text-muted-foreground">
           {description}
@@ -296,7 +296,6 @@ function UnlockScreen() {
 function HomeScreen() {
   const { authState, lockWallet } = useExtensionAuth();
   const network = useDashboardSettingsStore((state) => state.network);
-  const environment = useDashboardSettingsStore((state) => state.environment);
 
   return (
     <PageScaffold
@@ -317,12 +316,12 @@ function HomeScreen() {
       <section className="overflow-hidden rounded-[22px] border border-primary/15 bg-card p-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Wallet className="h-[18px] w-[18px]" />
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-foreground">
+              <Wallet className="h-4 w-4" />
             </span>
             <div>
               <p className="text-[13px] font-medium text-foreground">{authState.walletName}</p>
-              <p className="text-[11px] capitalize text-muted-foreground">{environment}</p>
+              <p className="text-[11px] text-muted-foreground">Smart account</p>
             </div>
           </div>
           <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">

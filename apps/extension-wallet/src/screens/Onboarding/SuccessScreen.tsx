@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Copy, Check, ExternalLink, Wallet, Sparkles, Shield, Zap } from 'lucide-react';
+import { Copy, Check, ExternalLink, Wallet, Shield, Zap } from 'lucide-react';
 import { useCopyWithFeedback } from '@/hooks/useCopyWithFeedback';
 import { truncateAddress } from '@/utils/address';
 
@@ -37,31 +37,33 @@ export function SuccessScreen({ publicKey, contractId, onComplete }: SuccessScre
   }, [publicKey]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-green-50/50 via-background to-background">
+    <div className="wallet-sheet">
       {/* Content */}
       <div className="flex-1 px-6 flex flex-col justify-center py-8">
         {/* Success Icon */}
-        <div className="flex justify-center mb-6">
+        <div className="mb-6 flex justify-center">
           <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-green-500/25">
-              <Sparkles className="w-12 h-12 text-white" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-success/10">
+              <Wallet className="h-6 w-6 text-success" />
             </div>
-            <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-green-400 border-4 border-background flex items-center justify-center">
-              <Check className="w-5 h-5 text-white" />
+            <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-success">
+              <Check className="h-3 w-3 text-success-foreground" />
             </div>
           </div>
         </div>
 
         {/* Title */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-foreground mb-2">Congratulations!</h1>
+          <h1 className="mb-2 text-2xl font-semibold tracking-tight text-foreground">
+            Wallet ready
+          </h1>
           <p className="text-sm text-muted-foreground">
             Your Ancore wallet has been created successfully
           </p>
         </div>
 
         {/* Account Card */}
-        <div className="bg-card rounded-2xl border border-border/50 p-5 mb-6 shadow-sm">
+        <div className="wallet-card mb-6 p-5">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
               <Wallet className="w-5 h-5 text-primary" />
@@ -114,7 +116,7 @@ export function SuccessScreen({ publicKey, contractId, onComplete }: SuccessScre
         {/* Features */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="bg-card rounded-xl border border-border/50 p-4">
-            <Shield className="w-5 h-5 text-green-600 mb-2" />
+            <Shield className="mb-2 h-5 w-5 text-success" />
             <p className="text-sm font-medium text-foreground">Secured</p>
             <p className="text-xs text-muted-foreground">Your keys are encrypted</p>
           </div>
@@ -126,10 +128,7 @@ export function SuccessScreen({ publicKey, contractId, onComplete }: SuccessScre
         </div>
 
         {/* View on Explorer */}
-        <button
-          onClick={openExplorer}
-          className="w-full py-3 px-4 bg-secondary hover:bg-secondary/80 text-secondary-foreground rounded-xl transition-colors flex items-center justify-center gap-2 text-sm font-medium"
-        >
+        <button onClick={openExplorer} className="wallet-pill-btn-secondary h-12">
           View on Stellar Expert
           <ExternalLink className="w-4 h-4" />
         </button>
@@ -137,10 +136,7 @@ export function SuccessScreen({ publicKey, contractId, onComplete }: SuccessScre
 
       {/* Footer */}
       <div className="px-6 py-6 pb-8">
-        <button
-          onClick={onComplete}
-          className="w-full py-4 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-primary/25 active:scale-[0.98]"
-        >
+        <button onClick={onComplete} className="wallet-pill-btn">
           <Wallet className="w-5 h-5" />
           Open Wallet
         </button>

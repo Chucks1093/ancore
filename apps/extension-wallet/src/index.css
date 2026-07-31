@@ -40,12 +40,18 @@
     --surface-raised: 0 0% 10%;
     --surface-sunken: 0 0% 6%;
     --success: 151 61% 53%;
+    --success-foreground: 154 70% 7%;
     --warning: 38 92% 50%;
+    --warning-foreground: 48 96% 11%;
     --info: 210 100% 56%;
+    --info-foreground: 0 0% 4%;
 
     --radius: 1rem;
+    --radius-sm: 0.75rem;
+    --radius-lg: 1.25rem;
     --radius-pill: 9999px;
     --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   }
 
   * {
@@ -103,7 +109,7 @@
   }
 
   .wallet-card {
-    @apply rounded-[20px] border border-border/70 bg-[hsl(var(--surface-raised))] p-4;
+    @apply rounded-[20px] border border-border bg-[hsl(var(--surface-raised))] p-4;
   }
 
   .wallet-card-inset {
@@ -132,7 +138,7 @@
   }
 
   .wallet-option-row {
-    @apply flex w-full items-center gap-3.5 rounded-[20px] border border-border/60
+    @apply flex w-full items-center gap-4 rounded-[20px] border border-border
       bg-[hsl(var(--surface-raised))] px-4 py-4 text-left
       hover:bg-white/[0.06] active:scale-[0.99];
     transition:
@@ -141,7 +147,46 @@
   }
 
   .wallet-option-icon {
-    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-full;
+    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent text-foreground;
+  }
+
+  .wallet-field {
+    @apply h-12 w-full rounded-[14px] border border-input
+      bg-[hsl(var(--surface-sunken))] px-4 text-sm text-foreground outline-none
+      placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/15;
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+
+  .wallet-textarea {
+    @apply min-h-28 w-full resize-none rounded-[14px] border border-input
+      bg-[hsl(var(--surface-sunken))] px-4 py-3 text-sm text-foreground outline-none
+      placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/15;
+  }
+
+  .wallet-status-success {
+    @apply border-success/20 bg-success/10 text-success;
+  }
+
+  .wallet-status-error {
+    @apply border-destructive/20 bg-destructive/10 text-destructive;
+  }
+
+  .wallet-status-warning {
+    @apply border-warning/20 bg-warning/10 text-warning;
+  }
+
+  .wallet-icon-sm {
+    @apply h-4 w-4;
+  }
+
+  .wallet-icon-md {
+    @apply h-5 w-5;
+  }
+
+  .wallet-icon-lg {
+    @apply h-6 w-6;
   }
 
   .wallet-muted {

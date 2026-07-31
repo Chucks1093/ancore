@@ -67,7 +67,7 @@ describe('Onboarding E2E Flow', () => {
         <SuccessScreen publicKey="GABC123XYZ789" onComplete={vi.fn()} />
       </NotificationProvider>
     );
-    expect(screen.getByText(/Congratulations!/i)).toBeInTheDocument();
+    expect(screen.getByText(/Wallet ready/i)).toBeInTheDocument();
   });
 
   it('should show password validation errors', () => {

@@ -220,7 +220,7 @@ describe('PasswordScreen', () => {
   it('renders password inputs', () => {
     render(<PasswordScreen onSubmit={vi.fn()} onBack={vi.fn()} />);
 
-    expect(screen.getByText('Create Your Password')).toBeInTheDocument();
+    expect(screen.getByText('Create your password')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Enter your password')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Confirm your password')).toBeInTheDocument();
   });
@@ -406,7 +406,7 @@ describe('SuccessScreen', () => {
   it('renders success message', () => {
     renderSuccessScreen(<SuccessScreen publicKey={testPublicKey} onComplete={vi.fn()} />);
 
-    expect(screen.getByText('Congratulations!')).toBeInTheDocument();
+    expect(screen.getByText('Wallet ready')).toBeInTheDocument();
     expect(
       screen.getByText('Your Ancore wallet has been created successfully')
     ).toBeInTheDocument();

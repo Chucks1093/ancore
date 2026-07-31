@@ -134,10 +134,10 @@ export function ReviewScreen({
         )}
 
         {timing === 'scheduled' && schedule && (
-          <div className="space-y-2 rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-4">
+          <div className="space-y-2 rounded-2xl border border-border bg-accent/60 p-4">
             <div className="flex items-center gap-2">
-              <CalendarClock className="h-4 w-4 text-cyan-400" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-cyan-300">
+              <CalendarClock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                 Scheduled Transfer
               </span>
             </div>

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { sendMessage } from '../messaging/sender';
 
 export const AUTH_STORAGE_KEY = 'ancore_extension_auth';
 
@@ -170,10 +171,20 @@ export function ExtensionAuthProvider({
           accountAddress: publicKey ?? DEFAULT_AUTH_STATE.accountAddress,
           ...(smartAccountId ? { smartAccountId } : {}),
         });
+        setIsUnlocked(true);
       },
       unlockWallet: async (password: string) => {
         try {
-          const isValid = await (unlockVerifier?.(password) ?? Boolean(password.trim()));
+          let isValid: boolean;
+
+          if (unlockVerifier) {
+            isValid = await unlockVerifier(password);
+          } else if (hasExtensionStorage()) {
+            const response = await sendMessage('UNLOCK_WALLET', { password });
+            isValid = response.success;
+          } else {
+            isValid = Boolean(password.trim());
+          }
 
           if (!isValid) {
             setUnlockError(DEFAULT_UNLOCK_ERROR);
@@ -183,9 +194,6 @@ export function ExtensionAuthProvider({
 
           setUnlockError(null);
           setIsUnlocked(true);
-
-          // Refresh from background to ensure sync
-          await refreshUnlockStatusInternal();
           return true;
         } catch {
           setUnlockError(DEFAULT_UNLOCK_ERROR);
@@ -196,6 +204,11 @@ export function ExtensionAuthProvider({
       lockWallet: () => {
         setUnlockError(null);
         setIsUnlocked(false);
+        if (hasExtensionStorage()) {
+          void sendMessage('LOCK_WALLET', {}).catch((error: unknown) => {
+            console.error('Failed to lock wallet in background', error);
+          });
+        }
       },
       resetWallet: () => {
         setUnlockError(null);

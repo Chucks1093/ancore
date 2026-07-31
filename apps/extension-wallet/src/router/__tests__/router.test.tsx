@@ -129,7 +129,7 @@ describe('extension router', () => {
 
     await waitForAuthReady();
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Session Keys' })
+      await screen.findByRole('heading', { level: 1, name: /session keys/i })
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /go back/i }));

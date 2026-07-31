@@ -28,8 +28,8 @@ const NETWORK_STYLES: Record<NetworkMode, { dot: string; badge: string; label: s
     label: 'Testnet',
   },
   futurenet: {
-    dot: 'bg-sky-400',
-    badge: 'border-sky-400/20 bg-sky-400/10 text-sky-300',
+    dot: 'bg-info',
+    badge: 'border-info/20 bg-info/10 text-info',
     label: 'Futurenet',
   },
 };
