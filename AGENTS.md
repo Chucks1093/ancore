@@ -151,6 +151,12 @@ Only dependencies in `pnpm.onlyBuiltDependencies` (root `package.json`) may run 
 2. **Allowlist** — add the package name to `pnpm.onlyBuiltDependencies` in `package.json`.
 3. **Lockfile** — run `pnpm install` to update `pnpm-lock.yaml`.
 
+Most transitive packages that declare a lifecycle hook do **not** need it to run — `core-js`, for
+example, only prints a funding banner. For those, add the entry to the `denied` array instead and
+leave `pnpm.onlyBuiltDependencies` untouched: that documents the script as reviewed while pnpm keeps
+blocking it. Never silence the check by granting execution. The policy check fails if a `denied`
+package appears in `pnpm.onlyBuiltDependencies`.
+
 ### CI enforcement
 
 The **Install Script Policy** job in CI runs `pnpm install --ignore-scripts` and validates that all
