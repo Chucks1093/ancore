@@ -16,6 +16,7 @@ import { BulkPayoutsPage } from '../pages/BulkPayouts';
 import { ScheduledTransfersPage } from '../pages/ScheduledTransfers';
 import { SendPage } from '../pages/Send';
 import { TransactionsPage } from '../pages/transactions';
+import { StatementExportModal } from '../features/statements/StatementExportModal';
 
 function ShellMessage({ title, description }: { title: string; description: string }) {
   return (
@@ -135,10 +136,53 @@ function OverviewPage() {
 }
 
 function ReportsPage() {
+  const [isStatementExportOpen, setIsStatementExportOpen] = useState(false);
+
   return (
-    <section>
-      <h2 className="text-2xl font-semibold">Reports</h2>
-      <p className="mt-2 text-sm text-slate-600">Placeholder route for reporting workstreams.</p>
+    <section className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold">Reports</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Export account statements for bookkeeping and reconciliation.
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-6">
+        <h3 className="text-lg font-medium text-slate-900">Statement Export</h3>
+        <p className="mt-2 text-sm text-slate-600">
+          Download CSV (always available) or PDF (when enabled) records of your account activity
+          from the indexer. Use date filters to narrow the export to a specific period.
+        </p>
+        <div className="mt-4 flex items-center gap-4">
+          <button
+            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
+            onClick={() => setIsStatementExportOpen(true)}
+            type="button"
+          >
+            Export statement
+          </button>
+          <p className="text-xs text-slate-500">
+            CSV columns: Timestamp, Counterparty, Amount, Asset, Status, Memo/Reference
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-6">
+        <h3 className="text-lg font-medium text-slate-900">Privacy note</h3>
+        <p className="mt-2 text-sm text-slate-600">
+          Statement exports contain transaction data fetched directly from the Ancore indexer for
+          the currently selected account. Memo fields are sanitized before inclusion in PDF exports
+          to prevent injection. Exported files are generated client-side and never transmitted to
+          third-party servers. Store exported files securely — they contain financial activity
+          associated with your Stellar account.
+        </p>
+      </div>
+
+      <StatementExportModal
+        accountId="GABC1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+        isOpen={isStatementExportOpen}
+        onClose={() => setIsStatementExportOpen(false)}
+      />
     </section>
   );
 }
