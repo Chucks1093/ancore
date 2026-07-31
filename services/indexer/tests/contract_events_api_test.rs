@@ -10,9 +10,18 @@ use tower::ServiceExt;
 use uuid::Uuid;
 
 use ancore_indexer::api::contract_events;
+use ancore_indexer::repositories::contract_events::MAX_LIMIT;
 
 async fn response_body_bytes(response: axum::response::Response) -> Bytes {
     response.into_body().collect().await.unwrap().to_bytes()
+}
+
+fn sample_contract_address() -> String {
+    format!("C{}", "A".repeat(55))
+}
+
+fn sample_account_id() -> String {
+    format!("G{}", "A".repeat(55))
 }
 
 async fn setup_test_app() -> (Router, PgPool) {
@@ -59,7 +68,8 @@ async fn insert_test_event(
 ) -> Uuid {
     let id = Uuid::new_v4();
     sqlx::query(
-        "INSERT INTO contract_events (id, contract_address, account_id, event_type, ledger_seq, timestamp, tx_hash, data)
+        "INSERT INTO contract_events \
+         (id, contract_address, account_id, event_type, ledger_seq, timestamp, tx_hash, data) \
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
     )
     .bind(id)
@@ -68,7 +78,7 @@ async fn insert_test_event(
     .bind(event_type)
     .bind(ledger_seq)
     .bind(timestamp)
-    .bind("abc123def456...")
+    .bind(format!("tx-{ledger_seq}-{event_type}"))
     .bind(serde_json::json!({}))
     .execute(pool)
     .await
@@ -79,18 +89,197 @@ async fn insert_test_event(
 
 #[tokio::test]
 #[ignore]
+async fn integration_test_malformed_contract_returns_400() {
+    let (app, _pool) = setup_test_app().await;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/contract-events?contract=not-a-contract")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let body = response_body_bytes(response).await;
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(json["code"], "INVALID_FILTER");
+    assert!(json["message"]
+        .as_str()
+        .unwrap()
+        .contains("Stellar contract address"));
+}
+
+#[tokio::test]
+#[ignore]
+async fn integration_test_empty_contract_returns_400() {
+    let (app, _pool) = setup_test_app().await;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/contract-events?contract=")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let body = response_body_bytes(response).await;
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(json["code"], "INVALID_FILTER");
+}
+
+#[tokio::test]
+#[ignore]
+async fn integration_test_offset_rejected() {
+    let (app, _pool) = setup_test_app().await;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/contract-events?offset=999999")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let body = response_body_bytes(response).await;
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(json["code"], "INVALID_FILTER");
+    assert!(json["message"].as_str().unwrap().contains("cursor_after"));
+}
+
+#[tokio::test]
+#[ignore]
+async fn integration_test_oversized_limit_clamped() {
+    let (app, pool) = setup_test_app().await;
+
+    let contract = sample_contract_address();
+    let account = sample_account_id();
+    let base_time = Utc.with_ymd_and_hms(2024, 1, 15, 10, 30, 0).unwrap();
+
+    for i in 0..(MAX_LIMIT + 20) {
+        insert_test_event(
+            &pool,
+            &contract,
+            &account,
+            "executed",
+            1000 + i as i64,
+            base_time + chrono::Duration::seconds(i as i64),
+        )
+        .await;
+    }
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri(format!(
+                    "/api/v1/contract-events?contract={}&limit=500",
+                    contract
+                ))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response_body_bytes(response).await;
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+
+    assert!(json["data"].as_array().unwrap().len() <= MAX_LIMIT as usize);
+    assert!(json["pagination"]["count"].as_u64().unwrap() <= MAX_LIMIT as u64);
+}
+
+#[tokio::test]
+#[ignore]
+async fn integration_test_types_malformed_contract_returns_400() {
+    let (app, _pool) = setup_test_app().await;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/contract-events/types?contract=GABC")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+    let body = response_body_bytes(response).await;
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(json["code"], "INVALID_FILTER");
+}
+
+#[tokio::test]
+#[ignore]
+async fn integration_test_invalid_ledger_range() {
+    let (app, _pool) = setup_test_app().await;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/contract-events?ledger_min=200&ledger_max=100")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    let body = response_body_bytes(response).await;
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(json["code"], "INVALID_FILTER");
+}
+
+#[tokio::test]
+#[ignore]
+async fn integration_test_cursor_after_and_before_mutual_exclusion() {
+    let (app, _pool) = setup_test_app().await;
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/contract-events?cursor_after=abc&cursor_before=def")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+#[ignore]
 async fn integration_test_list_events_happy_path() {
     let (app, pool) = setup_test_app().await;
 
-    let contract = "CAAAA...XYZ";
-    let account = "GABC1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+    let contract = sample_contract_address();
+    let account = sample_account_id();
     let base_time = Utc.with_ymd_and_hms(2024, 6, 1, 12, 0, 0).unwrap();
 
     for i in 0..5 {
         insert_test_event(
             &pool,
-            contract,
-            account,
+            &contract,
+            &account,
             "session_key_added",
             1000 + i,
             base_time,
@@ -116,7 +305,69 @@ async fn integration_test_list_events_happy_path() {
     assert!(json["data"].is_array());
     assert_eq!(json["data"].as_array().unwrap().len(), 5);
     assert!(json["pagination"].is_object());
-    assert!(json["pagination"]["has_next_page"].is_boolean());
+}
+
+#[tokio::test]
+#[ignore]
+async fn integration_test_cursor_pagination() {
+    let (app, pool) = setup_test_app().await;
+
+    let contract = sample_contract_address();
+    let account = sample_account_id();
+    let base_time = Utc.with_ymd_and_hms(2024, 6, 1, 12, 0, 0).unwrap();
+
+    for i in 0..5 {
+        insert_test_event(
+            &pool,
+            &contract,
+            &account,
+            "session_key_added",
+            100 + i,
+            base_time + chrono::Duration::seconds(i),
+        )
+        .await;
+    }
+
+    let response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/contract-events?limit=2")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response_body_bytes(response).await;
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(json["data"].as_array().unwrap().len(), 2);
+    assert_eq!(json["pagination"]["has_next_page"], true);
+    let next_cursor = json["pagination"]["next_cursor"]
+        .as_str()
+        .unwrap()
+        .to_string();
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri(format!(
+                    "/api/v1/contract-events?limit=2&cursor_after={}",
+                    next_cursor
+                ))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response_body_bytes(response).await;
+    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(json["data"].as_array().unwrap().len(), 2);
 }
 
 #[tokio::test]
@@ -233,67 +484,6 @@ async fn integration_test_list_events_by_type() {
     }
 }
 
-#[tokio::test]
-#[ignore]
-async fn integration_test_cursor_pagination() {
-    let (app, pool) = setup_test_app().await;
-
-    let contract = "CAAAA...XYZ";
-    let account = "GABC1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-    let base_time = Utc.with_ymd_and_hms(2024, 6, 1, 12, 0, 0).unwrap();
-
-    for i in 0..5 {
-        insert_test_event(
-            &pool,
-            contract,
-            account,
-            "session_key_added",
-            100 + i,
-            base_time + chrono::Duration::seconds(i),
-        )
-        .await;
-    }
-
-    // First page
-    let response = app
-        .clone()
-        .oneshot(
-            Request::builder()
-                .uri("/api/v1/contract-events?limit=2")
-                .body(Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(response.status(), StatusCode::OK);
-    let body = response_body_bytes(response).await;
-    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
-
-    assert_eq!(json["data"].as_array().unwrap().len(), 2);
-    assert_eq!(json["pagination"]["has_next_page"], true);
-    let next_cursor = json["pagination"]["next_cursor"].as_str().unwrap();
-
-    // Second page
-    let response = app
-        .oneshot(
-            Request::builder()
-                .uri(format!(
-                    "/api/v1/contract-events?limit=2&cursor_after={}",
-                    next_cursor
-                ))
-                .body(Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(response.status(), StatusCode::OK);
-    let body = response_body_bytes(response).await;
-    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
-
-    assert_eq!(json["data"].as_array().unwrap().len(), 2);
-}
 
 #[tokio::test]
 #[ignore]
@@ -456,44 +646,6 @@ async fn integration_test_list_types_by_account() {
     )));
 }
 
-#[tokio::test]
-#[ignore]
-async fn integration_test_invalid_ledger_range() {
-    let (app, _pool) = setup_test_app().await;
-
-    let response = app
-        .oneshot(
-            Request::builder()
-                .uri("/api/v1/contract-events?ledger_min=200&ledger_max=100")
-                .body(Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-    let body = response_body_bytes(response).await;
-    let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
-    assert_eq!(json["code"], "INVALID_FILTER");
-}
-
-#[tokio::test]
-#[ignore]
-async fn integration_test_cursor_after_and_before_mutual_exclusion() {
-    let (app, _pool) = setup_test_app().await;
-
-    let response = app
-        .oneshot(
-            Request::builder()
-                .uri("/api/v1/contract-events?cursor_after=abc&cursor_before=def")
-                .body(Body::empty())
-                .unwrap(),
-        )
-        .await
-        .unwrap();
-
-    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-}
 
 #[tokio::test]
 #[ignore]
