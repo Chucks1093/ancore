@@ -1,4 +1,7 @@
 #![no_std]
+// `create` takes 8 args (env + 7 invoice fields); the Soroban macros expand it
+// into generated client/impl fns that trip clippy's default 7-arg threshold.
+#![allow(clippy::too_many_arguments)]
 
 //! # Ancore Invoice Contract
 //!
@@ -7,8 +10,8 @@
 //! compatible with the #974 event-indexer decoder patterns.
 
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, symbol_short, token, Address, BytesN,
-    Env, IntoVal, String, Symbol, Vec,
+    contract, contracterror, contractimpl, contracttype, symbol_short, token, Address, BytesN, Env,
+    IntoVal, String, Symbol, Vec,
 };
 
 // ---------------------------------------------------------------------------
@@ -98,9 +101,17 @@ const INSTANCE_BUMP_THRESHOLD: u32 = 15 * DAY_IN_LEDGERS; // 15 days
 // ---------------------------------------------------------------------------
 
 mod events {
-    use soroban_sdk::{symbol_short, Address, BytesN, Env, Symbol};
+    use soroban_sdk::{symbol_short, Address, BytesN, Env};
 
-    pub fn invoice_created(env: &Env, id: BytesN<32>, creator: Address, recipient: Address, amount: i128, asset: Address, due_date: u64) {
+    pub fn invoice_created(
+        env: &Env,
+        id: BytesN<32>,
+        creator: Address,
+        recipient: Address,
+        amount: i128,
+        asset: Address,
+        due_date: u64,
+    ) {
         env.events().publish(
             (symbol_short!("inv"), symbol_short!("created")),
             (id, creator, recipient, amount, asset, due_date),
@@ -114,7 +125,14 @@ mod events {
         );
     }
 
-    pub fn invoice_paid(env: &Env, id: BytesN<32>, payer: Address, amount: i128, asset: Address, tx: BytesN<32>) {
+    pub fn invoice_paid(
+        env: &Env,
+        id: BytesN<32>,
+        payer: Address,
+        amount: i128,
+        asset: Address,
+        tx: BytesN<32>,
+    ) {
         env.events().publish(
             (symbol_short!("inv"), symbol_short!("paid")),
             (id, payer, amount, asset, tx),
@@ -234,7 +252,7 @@ impl InvoiceContract {
         payload.append(&asset.clone().to_xdr(&env));
         payload.append(&nonce.to_xdr(&env));
         payload.append(&env.ledger().timestamp().to_xdr(&env));
-        
+
         let id_hash = env.crypto().sha256(&payload);
         let id: BytesN<32> = id_hash.into_val(&env);
 
@@ -365,14 +383,7 @@ impl InvoiceContract {
             .set(&(KEY_INV, id.clone()), &invoice);
 
         extend_ttl(&env, None);
-        events::invoice_paid(
-            &env,
-            id,
-            payer,
-            invoice.amount,
-            invoice.asset,
-            payment_tx,
-        );
+        events::invoice_paid(&env, id, payer, invoice.amount, invoice.asset, payment_tx);
         Ok(())
     }
 
@@ -468,7 +479,7 @@ impl InvoiceContract {
                 invoices.push_back(inv);
             }
         }
-        
+
         for id in recipient_ids.into_iter() {
             if !creator_ids.contains(&id) {
                 if let Ok(inv) = Self::get_invoice(&env, &id) {
@@ -476,7 +487,7 @@ impl InvoiceContract {
                 }
             }
         }
-        
+
         invoices
     }
 
@@ -493,7 +504,7 @@ impl InvoiceContract {
 #[cfg(test)]
 mod test {
     use super::*;
-    use soroban_sdk::testutils::{Address as _, Ledger};
+    use soroban_sdk::testutils::{Address as _, Events, Ledger};
     use soroban_sdk::Address;
 
     /// Issue #1129: writes must extend the instance TTL so long-lived invoices
@@ -514,16 +525,15 @@ mod test {
         // Due 90 days out — the TTL bump should be sized to cover it.
         let due_date = env.ledger().timestamp() + 90 * 24 * 60 * 60;
 
-        let id = client
-            .create(
-                &creator,
-                &recipient,
-                &1000i128,
-                &asset,
-                &None,
-                &Some(due_date),
-                &None,
-            );
+        let id = client.create(
+            &creator,
+            &recipient,
+            &1000i128,
+            &asset,
+            &None,
+            &Some(due_date),
+            &None,
+        );
 
         // Advance the ledger well past the default 30-day bump (INSTANCE_BUMP_AMOUNT)
         // that would apply without a due-date-aware extension.
@@ -551,46 +561,47 @@ mod test {
 
         let due_date = env.ledger().timestamp() + 90 * 24 * 60 * 60;
 
-        let id1 = client
-            .create(
-                &account1,
-                &account2,
-                &1000i128,
-                &asset,
-                &None,
-                &Some(due_date),
-                &None,
-            );
+        let id1 = client.create(
+            &account1,
+            &account2,
+            &1000i128,
+            &asset,
+            &None,
+            &Some(due_date),
+            &None,
+        );
 
-        let id2 = client
-            .create(
-                &account2,
-                &account3,
-                &500i128,
-                &asset,
-                &None,
-                &Some(due_date),
-                &None,
-            );
+        let id2 = client.create(
+            &account2,
+            &account3,
+            &500i128,
+            &asset,
+            &None,
+            &Some(due_date),
+            &None,
+        );
 
-        let id3 = client
-            .create(
-                &account1,
-                &account1,
-                &200i128,
-                &asset,
-                &None,
-                &Some(due_date),
-                &None,
-            );
+        let id3 = client.create(
+            &account1,
+            &account1,
+            &200i128,
+            &asset,
+            &None,
+            &Some(due_date),
+            &None,
+        );
 
         let invs1 = client.get_by_account(&account1);
         assert_eq!(invs1.len(), 2);
         let mut has_id1 = false;
         let mut has_id3 = false;
         for inv in invs1.iter() {
-            if inv.id == id1 { has_id1 = true; }
-            if inv.id == id3 { has_id3 = true; }
+            if inv.id == id1 {
+                has_id1 = true;
+            }
+            if inv.id == id3 {
+                has_id3 = true;
+            }
         }
         assert!(has_id1 && has_id3);
 
@@ -600,5 +611,153 @@ mod test {
         let invs3 = client.get_by_account(&account3);
         assert_eq!(invs3.len(), 1);
         assert_eq!(invs3.get(0).unwrap().id, id2);
+    }
+
+    #[test]
+    fn test_create_open_happy_path() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract_id = env.register_contract(None, InvoiceContract);
+        let client = InvoiceContractClient::new(&env, &contract_id);
+
+        let creator = Address::generate(&env);
+        let recipient = Address::generate(&env);
+        let asset = Address::generate(&env);
+
+        let id = client.create(&creator, &recipient, &1000i128, &asset, &None, &None, &None);
+
+        let invoice = client.get(&id);
+        assert_eq!(invoice.status, InvoiceStatus::Draft);
+
+        client.open(&id);
+        let invoice = client.get(&id);
+        assert_eq!(invoice.status, InvoiceStatus::Open);
+        assert_eq!(invoice.opened_at, Some(env.ledger().timestamp()));
+
+        // The `opened` event follows the `created` event and carries the
+        // two-symbol topic schema the indexer decodes.
+        let events_list = env.events().all();
+        let (_contract, topics, _data) = events_list.get_unchecked(1).clone();
+        assert_eq!(topics.len(), 2);
+    }
+
+    #[test]
+    fn test_cancel_from_draft_and_open() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract_id = env.register_contract(None, InvoiceContract);
+        let client = InvoiceContractClient::new(&env, &contract_id);
+
+        let creator = Address::generate(&env);
+        let recipient = Address::generate(&env);
+        let asset = Address::generate(&env);
+
+        // Cancel from Draft.
+        let id1 = client.create(&creator, &recipient, &1000i128, &asset, &None, &None, &None);
+        client.cancel(&id1);
+        assert_eq!(client.get(&id1).status, InvoiceStatus::Cancelled);
+
+        // Cancel from Open.
+        let id2 = client.create(&creator, &recipient, &500i128, &asset, &None, &None, &None);
+        client.open(&id2);
+        client.cancel(&id2);
+        assert_eq!(client.get(&id2).status, InvoiceStatus::Cancelled);
+    }
+
+    #[test]
+    fn test_pay_rejected_on_non_open_status() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract_id = env.register_contract(None, InvoiceContract);
+        let client = InvoiceContractClient::new(&env, &contract_id);
+
+        let creator = Address::generate(&env);
+        let recipient = Address::generate(&env);
+        let asset_admin = Address::generate(&env);
+        let asset = env
+            .register_stellar_asset_contract_v2(asset_admin)
+            .address();
+        token::StellarAssetClient::new(&env, &asset).mint(&recipient, &10_000i128);
+
+        let id = client.create(&creator, &recipient, &1000i128, &asset, &None, &None, &None);
+
+        // Paying a Draft invoice must be rejected.
+        assert!(client
+            .try_pay(&id, &recipient, &BytesN::from_array(&env, &[1u8; 32]))
+            .is_err());
+
+        // Once opened the payment succeeds and moves the asset.
+        client.open(&id);
+        client.pay(&id, &recipient, &BytesN::from_array(&env, &[1u8; 32]));
+        assert_eq!(client.get(&id).status, InvoiceStatus::Paid);
+        assert_eq!(token::Client::new(&env, &asset).balance(&creator), 1000i128);
+    }
+
+    #[test]
+    fn test_expiry_when_past_due_date() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract_id = env.register_contract(None, InvoiceContract);
+        let client = InvoiceContractClient::new(&env, &contract_id);
+
+        let creator = Address::generate(&env);
+        let recipient = Address::generate(&env);
+        let asset = Address::generate(&env);
+
+        let due_date = env.ledger().timestamp() + 1000;
+        let id = client.create(
+            &creator,
+            &recipient,
+            &1000i128,
+            &asset,
+            &None,
+            &Some(due_date),
+            &None,
+        );
+
+        client.open(&id);
+
+        // Advance past the due date.
+        env.ledger().with_mut(|li| {
+            li.timestamp = li.timestamp.saturating_add(2000);
+        });
+
+        // Payment must fail once the invoice is past due.
+        assert!(client
+            .try_pay(&id, &recipient, &BytesN::from_array(&env, &[1u8; 32]))
+            .is_err());
+
+        // Explicit expiry transitions the invoice.
+        client.expire(&id);
+        assert_eq!(client.get(&id).status, InvoiceStatus::Expired);
+    }
+
+    #[test]
+    fn test_require_auth_enforced() {
+        // Without mocked auth, creator-gated entry points are rejected.
+        let env = Env::default();
+        let contract_id = env.register_contract(None, InvoiceContract);
+        let client = InvoiceContractClient::new(&env, &contract_id);
+
+        let creator = Address::generate(&env);
+        let recipient = Address::generate(&env);
+        let asset = Address::generate(&env);
+
+        assert!(client
+            .try_create(&creator, &recipient, &1000i128, &asset, &None, &None, &None)
+            .is_err());
+
+        // With auth satisfied the same call succeeds.
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract_id = env.register_contract(None, InvoiceContract);
+        let client = InvoiceContractClient::new(&env, &contract_id);
+
+        let creator = Address::generate(&env);
+        let recipient = Address::generate(&env);
+        let asset = Address::generate(&env);
+
+        let id = client.create(&creator, &recipient, &1000i128, &asset, &None, &None, &None);
+        assert_eq!(client.get(&id).status, InvoiceStatus::Draft);
     }
 }
