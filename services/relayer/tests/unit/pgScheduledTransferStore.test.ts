@@ -4,7 +4,6 @@
  * Uses an in-process mock of the pg Pool so no real database is required.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PgScheduledTransferStore } from '../../src/scheduler/PgScheduledTransferStore';
 import type { CreateScheduledTransferInput } from '../../src/scheduler/types';
 
@@ -14,7 +13,7 @@ type Row = Record<string, unknown>;
 
 function makePgPool(rowsByQuery: Map<string, Row[]> = new Map()) {
   return {
-    query: vi.fn().mockImplementation((sql: string, _params?: unknown[]) => {
+    query: jest.fn().mockImplementation((sql: string, _params?: unknown[]) => {
       // Match on keyword substrings for simplicity
       for (const [key, rows] of rowsByQuery) {
         if (sql.includes(key)) {
@@ -86,7 +85,7 @@ describe('PgScheduledTransferStore.create', () => {
 
     const result = await store.create(makeValidInput(), 'caller-1');
 
-    expect(pool.query).toHaveBeenCalledOnce();
+    expect(pool.query).toHaveBeenCalledTimes(1);
     expect(pool.query.mock.calls[0][0]).toContain('INSERT INTO scheduled_transfers');
     expect(result.id).toBe('xfer-uuid-1');
     expect(result.status).toBe('active');
@@ -160,7 +159,7 @@ describe('PgScheduledTransferStore.tryAcquireLease', () => {
     const workerId = (store as unknown as { workerId: string }).workerId;
 
     const pool = {
-      query: vi
+      query: jest
         .fn()
         .mockResolvedValueOnce({ rows: [{ worker_id: workerId }], rowCount: 1 })
         .mockResolvedValueOnce({ rows: [{ worker_id: workerId }], rowCount: 1 }),
@@ -175,7 +174,7 @@ describe('PgScheduledTransferStore.tryAcquireLease', () => {
 
   it('returns false when the upsert returns no rows (lock held by another worker)', async () => {
     const pool = {
-      query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+      query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
     };
     const store = new PgScheduledTransferStore(pool as never);
     const acquired = await store.tryAcquireLease('xfer-uuid-1');
@@ -211,14 +210,14 @@ describe('PgScheduledTransferStore.appendExecution', () => {
 
 describe('PgScheduledTransferStore.recordFailureNotification', () => {
   it('inserts a notification row', async () => {
-    const pool = { query: vi.fn().mockResolvedValue({ rows: [], rowCount: 1 }) };
+    const pool = { query: jest.fn().mockResolvedValue({ rows: [], rowCount: 1 }) };
     const store = new PgScheduledTransferStore(pool as never);
 
     await store.recordFailureNotification('xfer-uuid-1', 'consecutive_failure', {
       consecutiveFailures: 2,
     });
 
-    expect(pool.query).toHaveBeenCalledOnce();
+    expect(pool.query).toHaveBeenCalledTimes(1);
     expect(pool.query.mock.calls[0][0]).toContain('INSERT INTO scheduled_transfer_notifications');
   });
 });

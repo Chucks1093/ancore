@@ -4,10 +4,9 @@
  * Tests lease locking, failure notification callbacks, and metric recording.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ScheduledTransferService } from '../../src/scheduler/ScheduledTransferService';
 import type { FailureNotifier } from '../../src/scheduler/ScheduledTransferService';
-import type { AnyScheduledTransferStore } from '../../src/scheduler/ScheduledTransferService';
+import type { PgScheduledTransferStore } from '../../src/scheduler/PgScheduledTransferStore';
 import type { ScheduledTransfer, ScheduledTransferExecutionLog } from '../../src/scheduler/types';
 import type { RelayServiceContract } from '../../src/types';
 
@@ -41,31 +40,31 @@ function makeTransfer(overrides: Partial<ScheduledTransfer> = {}): ScheduledTran
   };
 }
 
-function makeAsyncStore(transfers: ScheduledTransfer[]): AnyScheduledTransferStore {
+function makeAsyncStore(transfers: ScheduledTransfer[]): jest.Mocked<PgScheduledTransferStore> {
   return {
-    create: vi.fn().mockResolvedValue(transfers[0]),
-    listByAccount: vi.fn().mockResolvedValue(transfers),
-    getByIdForCaller: vi
+    create: jest.fn().mockResolvedValue(transfers[0]),
+    listByAccount: jest.fn().mockResolvedValue(transfers),
+    getByIdForCaller: jest
       .fn()
       .mockImplementation((id: string) => Promise.resolve(transfers.find((t) => t.id === id))),
-    updateStatus: vi
+    updateStatus: jest
       .fn()
       .mockImplementation((id: string, status: string) =>
         Promise.resolve({ ...transfers.find((t) => t.id === id)!, status })
       ),
-    updateAfterExecution: vi.fn().mockResolvedValue(undefined),
-    listDue: vi.fn().mockResolvedValue(transfers.filter((t) => t.status === 'active')),
-    tryAcquireProcessing: vi.fn().mockResolvedValue(true),
-    releaseProcessing: vi.fn().mockResolvedValue(undefined),
-    appendExecution: vi.fn().mockResolvedValue(undefined),
-    listExecutions: vi.fn().mockResolvedValue([]),
-    recordFailureNotification: vi.fn().mockResolvedValue(undefined),
-  } as unknown as AnyScheduledTransferStore;
+    updateAfterExecution: jest.fn().mockResolvedValue(undefined),
+    listDue: jest.fn().mockResolvedValue(transfers.filter((t) => t.status === 'active')),
+    tryAcquireProcessing: jest.fn().mockResolvedValue(true),
+    releaseProcessing: jest.fn().mockResolvedValue(undefined),
+    appendExecution: jest.fn().mockResolvedValue(undefined),
+    listExecutions: jest.fn().mockResolvedValue([]),
+    recordFailureNotification: jest.fn().mockResolvedValue(undefined),
+  } as unknown as jest.Mocked<PgScheduledTransferStore>;
 }
 
 function makeRelayService(success: boolean): RelayServiceContract {
   return {
-    executeRelay: vi.fn().mockResolvedValue({
+    executeRelay: jest.fn().mockResolvedValue({
       success,
       transactionId: success ? 'tx123' : undefined,
       error: success ? undefined : { message: 'relay failed', code: 'RELAY_ERROR' },
@@ -79,7 +78,7 @@ describe('ScheduledTransferService.processDueTransfers — lease acquisition', (
   it('skips a transfer when the lease cannot be acquired', async () => {
     const transfer = makeTransfer();
     const store = makeAsyncStore([transfer]);
-    (store.tryAcquireProcessing as ReturnType<typeof vi.fn>).mockResolvedValue(false);
+    store.tryAcquireProcessing.mockResolvedValue(false);
 
     const relayService = makeRelayService(true);
     const svc = new ScheduledTransferService(store, relayService);
@@ -93,7 +92,7 @@ describe('ScheduledTransferService.processDueTransfers — lease acquisition', (
     const transfer = makeTransfer();
     const store = makeAsyncStore([transfer]);
     const relayService = {
-      executeRelay: vi.fn().mockRejectedValue(new Error('network timeout')),
+      executeRelay: jest.fn().mockRejectedValue(new Error('network timeout')),
     } as unknown as RelayServiceContract;
 
     const svc = new ScheduledTransferService(store, relayService);
@@ -110,14 +109,14 @@ describe('ScheduledTransferService — failure notifications', () => {
     const relayService = makeRelayService(false);
 
     const notifier: FailureNotifier = {
-      onConsecutiveFailure: vi.fn().mockResolvedValue(undefined),
-      onMaxFailuresReached: vi.fn().mockResolvedValue(undefined),
+      onConsecutiveFailure: jest.fn().mockResolvedValue(undefined),
+      onMaxFailuresReached: jest.fn().mockResolvedValue(undefined),
     };
 
     const svc = new ScheduledTransferService(store, relayService, notifier);
     await svc.processDueTransfers(new Date());
 
-    expect(notifier.onConsecutiveFailure).toHaveBeenCalledOnce();
+    expect(notifier.onConsecutiveFailure).toHaveBeenCalledTimes(1);
     expect(notifier.onConsecutiveFailure).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'xfer-1' }),
       2
@@ -147,14 +146,14 @@ describe('ScheduledTransferService — failure notifications', () => {
     const relayService = makeRelayService(false);
 
     const notifier: FailureNotifier = {
-      onConsecutiveFailure: vi.fn().mockResolvedValue(undefined),
-      onMaxFailuresReached: vi.fn().mockResolvedValue(undefined),
+      onConsecutiveFailure: jest.fn().mockResolvedValue(undefined),
+      onMaxFailuresReached: jest.fn().mockResolvedValue(undefined),
     };
 
     const svc = new ScheduledTransferService(store, relayService, notifier);
     await svc.processDueTransfers(new Date());
 
-    expect(notifier.onMaxFailuresReached).toHaveBeenCalledOnce();
+    expect(notifier.onMaxFailuresReached).toHaveBeenCalledTimes(1);
     expect(notifier.onConsecutiveFailure).not.toHaveBeenCalled();
     expect(store.updateAfterExecution).toHaveBeenCalledWith(
       transfer.id,
@@ -187,8 +186,8 @@ describe('ScheduledTransferService — failure notifications', () => {
     const relayService = makeRelayService(false);
 
     const notifier: FailureNotifier = {
-      onConsecutiveFailure: vi.fn().mockResolvedValue(undefined),
-      onMaxFailuresReached: vi.fn().mockResolvedValue(undefined),
+      onConsecutiveFailure: jest.fn().mockResolvedValue(undefined),
+      onMaxFailuresReached: jest.fn().mockResolvedValue(undefined),
     };
 
     const svc = new ScheduledTransferService(store, relayService, notifier);

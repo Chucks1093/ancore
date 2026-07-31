@@ -6,6 +6,7 @@ import { ScheduledTransferStore } from './ScheduledTransferStore';
 import type { PgScheduledTransferStore } from './PgScheduledTransferStore';
 import { computeNextRunAt, isDue } from './schedule-utils';
 import { schedulerMaxFailuresReached } from '../metrics';
+import { rootLogger } from '../logging/logger';
 import type {
   CreateScheduledTransferInput,
   ScheduledTransfer,
@@ -95,6 +96,17 @@ export class ScheduledTransferService {
       try {
         await this.executeTransfer(transfer, now);
         processed++;
+      } catch (err) {
+        // A single transfer must not abort the whole scheduler pass; otherwise
+        // one persistently failing transfer blocks every later due transfer.
+        rootLogger.error(
+          {
+            scheduledTransferId: transfer.id,
+            outcome: 'error',
+            error: err instanceof Error ? err.message : String(err),
+          },
+          'scheduled transfer execution threw'
+        );
       } finally {
         await this.store.releaseProcessing(transfer.id);
       }
