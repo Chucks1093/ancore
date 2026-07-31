@@ -15,6 +15,12 @@
               "args": [
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+                },
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                },
+                {
+                  "u64": 10
                 }
               ]
             }
@@ -30,26 +36,10 @@
           "function": {
             "contract_fn": {
               "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
-              "function_name": "add_session_key",
+              "function_name": "propose_upgrade",
               "args": [
                 {
-                  "bytes": "39f59275a8dabbb4e3501de7c83ccc1f4f6ae4751a669df8486e4a5503416bdb"
-                },
-                {
-                  "u64": 1100
-                },
-                {
-                  "vec": [
-                    {
-                      "u32": 1
-                    }
-                  ]
-                },
-                "void",
-                "void",
-                "void",
-                {
-                  "u64": 0
+                  "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
                 }
               ]
             }
@@ -63,132 +53,13 @@
   "ledger": {
     "protocol_version": 21,
     "sequence_number": 0,
-    "timestamp": 1101,
+    "timestamp": 1000,
     "network_id": "0000000000000000000000000000000000000000000000000000000000000000",
     "base_reserve": 0,
     "min_persistent_entry_ttl": 4096,
     "min_temp_entry_ttl": 16,
     "max_entry_ttl": 6312000,
     "ledger_entries": [
-      [
-        {
-          "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
-            "key": {
-              "vec": [
-                {
-                  "symbol": "SessionKey"
-                },
-                {
-                  "bytes": "39f59275a8dabbb4e3501de7c83ccc1f4f6ae4751a669df8486e4a5503416bdb"
-                }
-              ]
-            },
-            "durability": "persistent"
-          }
-        },
-        [
-          {
-            "last_modified_ledger_seq": 0,
-            "data": {
-              "contract_data": {
-                "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
-                "key": {
-                  "vec": [
-                    {
-                      "symbol": "SessionKey"
-                    },
-                    {
-                      "bytes": "39f59275a8dabbb4e3501de7c83ccc1f4f6ae4751a669df8486e4a5503416bdb"
-                    }
-                  ]
-                },
-                "durability": "persistent",
-                "val": {
-                  "map": [
-                    {
-                      "key": {
-                        "symbol": "allowed_contracts"
-                      },
-                      "val": "void"
-                    },
-                    {
-                      "key": {
-                        "symbol": "cumulative_limit"
-                      },
-                      "val": "void"
-                    },
-                    {
-                      "key": {
-                        "symbol": "expires_at"
-                      },
-                      "val": {
-                        "u64": 1100
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "max_amount_per_call"
-                      },
-                      "val": "void"
-                    },
-                    {
-                      "key": {
-                        "symbol": "permissions"
-                      },
-                      "val": {
-                        "vec": [
-                          {
-                            "u32": 1
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "public_key"
-                      },
-                      "val": {
-                        "bytes": "39f59275a8dabbb4e3501de7c83ccc1f4f6ae4751a669df8486e4a5503416bdb"
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "spend_window_seconds"
-                      },
-                      "val": {
-                        "u64": 0
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "spend_window_start"
-                      },
-                      "val": {
-                        "u64": 1000
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "spent_in_window"
-                      },
-                      "val": {
-                        "i128": {
-                          "hi": 0,
-                          "lo": 0
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            },
-            "ext": "v0"
-          },
-          17305
-        ]
-      ],
       [
         {
           "contract_data": {
@@ -216,12 +87,12 @@
                         "key": {
                           "vec": [
                             {
-                              "symbol": "Nonce"
+                              "symbol": "NextProposalId"
                             }
                           ]
                         },
                         "val": {
-                          "u64": 0
+                          "u32": 2
                         }
                       },
                       {
@@ -240,12 +111,88 @@
                         "key": {
                           "vec": [
                             {
-                              "symbol": "Version"
+                              "symbol": "Proposal"
+                            },
+                            {
+                              "u32": 1
                             }
                           ]
                         },
                         "val": {
-                          "u32": 1
+                          "map": [
+                            {
+                              "key": {
+                                "symbol": "cancelled"
+                              },
+                              "val": {
+                                "bool": false
+                              }
+                            },
+                            {
+                              "key": {
+                                "symbol": "execute_after"
+                              },
+                              "val": {
+                                "u64": 1010
+                              }
+                            },
+                            {
+                              "key": {
+                                "symbol": "executed"
+                              },
+                              "val": {
+                                "bool": false
+                              }
+                            },
+                            {
+                              "key": {
+                                "symbol": "id"
+                              },
+                              "val": {
+                                "u32": 1
+                              }
+                            },
+                            {
+                              "key": {
+                                "symbol": "proposed_at"
+                              },
+                              "val": {
+                                "u64": 1000
+                              }
+                            },
+                            {
+                              "key": {
+                                "symbol": "wasm_hash"
+                              },
+                              "val": {
+                                "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "key": {
+                          "vec": [
+                            {
+                              "symbol": "TargetAccount"
+                            }
+                          ]
+                        },
+                        "val": {
+                          "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                        }
+                      },
+                      {
+                        "key": {
+                          "vec": [
+                            {
+                              "symbol": "TimelockDelay"
+                            }
+                          ]
+                        },
+                        "val": {
+                          "u64": 10
                         }
                       }
                     ]
@@ -326,38 +273,6 @@
       ],
       [
         {
-          "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
-            "key": "ledger_key_contract_instance",
-            "durability": "persistent"
-          }
-        },
-        [
-          {
-            "last_modified_ledger_seq": 0,
-            "data": {
-              "contract_data": {
-                "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
-                "key": "ledger_key_contract_instance",
-                "durability": "persistent",
-                "val": {
-                  "contract_instance": {
-                    "executable": {
-                      "wasm": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-                    },
-                    "storage": null
-                  }
-                }
-              }
-            },
-            "ext": "v0"
-          },
-          4095
-        ]
-      ],
-      [
-        {
           "contract_code": {
             "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
           }
@@ -399,7 +314,17 @@
               }
             ],
             "data": {
-              "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+              "vec": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+                },
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                },
+                {
+                  "u64": 10
+                }
+              ]
             }
           }
         }
@@ -415,11 +340,11 @@
           "v0": {
             "topics": [
               {
-                "symbol": "initialized"
+                "symbol": "timelock_updated"
               }
             ],
             "data": {
-              "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
+              "u64": 10
             }
           }
         }
@@ -462,31 +387,11 @@
                 "bytes": "0000000000000000000000000000000000000000000000000000000000000001"
               },
               {
-                "symbol": "add_session_key"
+                "symbol": "propose_upgrade"
               }
             ],
             "data": {
-              "vec": [
-                {
-                  "bytes": "39f59275a8dabbb4e3501de7c83ccc1f4f6ae4751a669df8486e4a5503416bdb"
-                },
-                {
-                  "u64": 1100
-                },
-                {
-                  "vec": [
-                    {
-                      "u32": 1
-                    }
-                  ]
-                },
-                "void",
-                "void",
-                "void",
-                {
-                  "u64": 0
-                }
-              ]
+              "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
             }
           }
         }
@@ -502,16 +407,19 @@
           "v0": {
             "topics": [
               {
-                "symbol": "session_key_added"
+                "symbol": "proposed"
               }
             ],
             "data": {
               "vec": [
                 {
-                  "bytes": "39f59275a8dabbb4e3501de7c83ccc1f4f6ae4751a669df8486e4a5503416bdb"
+                  "u32": 1
                 },
                 {
-                  "u64": 1100
+                  "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
+                },
+                {
+                  "u64": 1010
                 }
               ]
             }
@@ -532,10 +440,12 @@
                 "symbol": "fn_return"
               },
               {
-                "symbol": "add_session_key"
+                "symbol": "propose_upgrade"
               }
             ],
-            "data": "void"
+            "data": {
+              "u32": 1
+            }
           }
         }
       },
@@ -556,43 +466,11 @@
                 "bytes": "0000000000000000000000000000000000000000000000000000000000000001"
               },
               {
-                "symbol": "execute"
+                "symbol": "execute_upgrade"
               }
             ],
             "data": {
-              "vec": [
-                {
-                  "vec": [
-                    {
-                      "symbol": "SessionKey"
-                    },
-                    {
-                      "bytes": "39f59275a8dabbb4e3501de7c83ccc1f4f6ae4751a669df8486e4a5503416bdb"
-                    }
-                  ]
-                },
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
-                },
-                {
-                  "symbol": "get_nonce"
-                },
-                {
-                  "vec": []
-                },
-                {
-                  "u64": 0
-                },
-                {
-                  "bytes": "39f59275a8dabbb4e3501de7c83ccc1f4f6ae4751a669df8486e4a5503416bdb"
-                },
-                {
-                  "bytes": "1f45057581abc8244494969b21372ca062e4e266f3aeeb504de0b41e72657e62597e6529052d857d77b10bf7d72cb1fda28f494a33930346cfcff17623abad0a"
-                },
-                {
-                  "bytes": "000000120000000100000000000000000000000000000000000000000000000000000000000000030000000f000000096765745f6e6f6e6365000000000000100000000100000000000000050000000000000000"
-                }
-              ]
+              "u32": 1
             }
           }
         }
@@ -611,12 +489,12 @@
                 "symbol": "fn_return"
               },
               {
-                "symbol": "execute"
+                "symbol": "execute_upgrade"
               }
             ],
             "data": {
               "error": {
-                "contract": 6
+                "contract": 9
               }
             }
           }
@@ -637,7 +515,7 @@
               },
               {
                 "error": {
-                  "contract": 6
+                  "contract": 9
                 }
               }
             ],
@@ -662,79 +540,26 @@
               },
               {
                 "error": {
-                  "contract": 6
+                  "contract": 9
                 }
               }
             ],
             "data": {
               "vec": [
                 {
-                  "string": "contract call failed"
+                  "string": "contract try_call failed"
                 },
                 {
-                  "symbol": "execute"
+                  "symbol": "execute_upgrade"
                 },
                 {
                   "vec": [
                     {
-                      "vec": [
-                        {
-                          "symbol": "SessionKey"
-                        },
-                        {
-                          "bytes": "39f59275a8dabbb4e3501de7c83ccc1f4f6ae4751a669df8486e4a5503416bdb"
-                        }
-                      ]
-                    },
-                    {
-                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
-                    },
-                    {
-                      "symbol": "get_nonce"
-                    },
-                    {
-                      "vec": []
-                    },
-                    {
-                      "u64": 0
-                    },
-                    {
-                      "bytes": "39f59275a8dabbb4e3501de7c83ccc1f4f6ae4751a669df8486e4a5503416bdb"
-                    },
-                    {
-                      "bytes": "1f45057581abc8244494969b21372ca062e4e266f3aeeb504de0b41e72657e62597e6529052d857d77b10bf7d72cb1fda28f494a33930346cfcff17623abad0a"
-                    },
-                    {
-                      "bytes": "000000120000000100000000000000000000000000000000000000000000000000000000000000030000000f000000096765745f6e6f6e6365000000000000100000000100000000000000050000000000000000"
+                      "u32": 1
                     }
                   ]
                 }
               ]
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": null,
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "error"
-              },
-              {
-                "error": {
-                  "contract": 6
-                }
-              }
-            ],
-            "data": {
-              "string": "escalating error to panic"
             }
           }
         }

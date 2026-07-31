@@ -1,6 +1,7 @@
 use soroban_sdk::{
-    contract, contractimpl, contracttype, testutils::{Address as _, Ledger as _},
-    Address, BytesN, Env, Symbol, Val, Vec,
+    contract, contractimpl,
+    testutils::{Address as _, Ledger as _},
+    Address, BytesN, Env, Symbol,
 };
 
 use upgrade::UpgradeGovernorClient;
@@ -20,7 +21,8 @@ impl MockAccount {
     pub fn upgrade(env: Env, _new_wasm_hash: BytesN<32>) {
         // In a real account, this would call env.deployer().update_current_contract_wasm(...)
         // For the mock, we just emit an event to prove invocation.
-        env.events().publish((Symbol::new(&env, "upgraded"),), _new_wasm_hash);
+        env.events()
+            .publish((Symbol::new(&env, "upgraded"),), _new_wasm_hash);
     }
 }
 

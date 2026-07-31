@@ -184,8 +184,8 @@ impl UpgradeGovernor {
     ///
     /// This calls `upgrade(new_wasm_hash)` on the target account contract.
     pub fn execute_upgrade(env: Env, proposal_id: u32) -> Result<(), UpgradeError> {
-        let proposal = Self::get_proposal(env.clone(), proposal_id)
-            .ok_or(UpgradeError::ProposalNotFound)?;
+        let proposal =
+            Self::get_proposal(env.clone(), proposal_id).ok_or(UpgradeError::ProposalNotFound)?;
 
         if proposal.executed {
             return Err(UpgradeError::ProposalAlreadyExecuted);
@@ -239,8 +239,8 @@ impl UpgradeGovernor {
         let owner = Self::require_owner(env.clone())?;
         owner.require_auth();
 
-        let mut proposal = Self::get_proposal(env.clone(), proposal_id)
-            .ok_or(UpgradeError::ProposalNotFound)?;
+        let mut proposal =
+            Self::get_proposal(env.clone(), proposal_id).ok_or(UpgradeError::ProposalNotFound)?;
 
         if proposal.executed {
             return Err(UpgradeError::ProposalAlreadyExecuted);
@@ -285,7 +285,9 @@ impl UpgradeGovernor {
 
     /// View a proposal by ID.
     pub fn get_proposal(env: Env, proposal_id: u32) -> Option<Proposal> {
-        env.storage().instance().get(&DataKey::Proposal(proposal_id))
+        env.storage()
+            .instance()
+            .get(&DataKey::Proposal(proposal_id))
     }
 
     /// View the current timelock delay.
@@ -322,12 +324,7 @@ mod test {
         Address, BytesN, Env,
     };
 
-    fn init(
-        env: &Env,
-        client: &UpgradeGovernorClient,
-        owner: &Address,
-        target: &Address,
-    ) {
+    fn init(env: &Env, client: &UpgradeGovernorClient, owner: &Address, target: &Address) {
         env.mock_all_auths();
         client.initialize(owner, target, &10u64);
     }
@@ -373,8 +370,7 @@ mod test {
             soroban_sdk::FromVal::from_val(&env, &topics.get_unchecked(0));
         assert_eq!(topic_symbol, events::proposed(&env));
 
-        let data_tuple: (u32, BytesN<32>, u64) =
-            soroban_sdk::FromVal::from_val(&env, &data);
+        let data_tuple: (u32, BytesN<32>, u64) = soroban_sdk::FromVal::from_val(&env, &data);
         assert_eq!(data_tuple.0, proposal_id);
         assert_eq!(data_tuple.1, wasm_hash);
         assert_eq!(data_tuple.2, 1010u64); // 1000 + 10
