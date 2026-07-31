@@ -12,12 +12,14 @@ import { registerHealthHandlers } from './health';
 import { registerLockUnlockHandlers } from './lock-unlock';
 import { registerWalletStateHandlers } from './wallet-state';
 import { registerSignTransactionHandlers } from './sign-transaction';
+import { registerSignAuthEntryHandlers } from './sign-auth-entry';
 
 export function registerInternalHandlers(): void {
   registerWalletStateHandlers();
   registerLockUnlockHandlers();
   registerHealthHandlers();
   registerSignTransactionHandlers();
+  registerSignAuthEntryHandlers();
 }
 
 export { probeServicesOnStartup } from './health';

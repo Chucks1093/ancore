@@ -140,7 +140,7 @@ export async function signTransaction(
 export async function signAuthEntry(params: {
   authEntryXdr: string;
   networkPassphrase?: string;
-}): Promise<{ signedAuthEntryXdr: string }> {
+}): Promise<{ signedAuthEntry: string }> {
   return sendExternalRequest(ExternalApiMethod.SIGN_AUTH_ENTRY, params);
 }
 

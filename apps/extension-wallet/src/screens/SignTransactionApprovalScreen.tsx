@@ -17,11 +17,14 @@ export function SignTransactionApprovalScreen({
   title = 'Sign Transaction',
   subtitle = 'Review and approve the transaction',
   description = 'A dApp is requesting to sign a transaction. Approve only if you trust the source.',
+  requestType = 'sign-transaction',
 }: {
   requestId?: string;
   title?: string;
   subtitle?: string;
   description?: string;
+  /** Determines which message types to send to the background on approve/reject. */
+  requestType?: 'sign-transaction' | 'sign-auth-entry';
 }) {
   const requestId = useRequestId(propRequestId);
   const [done, setDone] = React.useState(false);
