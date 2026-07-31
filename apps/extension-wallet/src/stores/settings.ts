@@ -42,6 +42,7 @@ export interface SettingsState {
   setDailyTransferLimit: (amount: number) => void;
   setTransferStepUpThreshold: (amount: number) => void;
   setEnableLockShortcut: (value: boolean) => void;
+  setTelemetryOptIn: (value: boolean) => void;
   /**
    * Override the Horizon URL for the currently selected network.
    * Validates the URL against the active network profile before applying.

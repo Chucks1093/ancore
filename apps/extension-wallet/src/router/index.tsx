@@ -725,12 +725,8 @@ function HistoryScreen() {
 }
 
 function NotFoundScreen() {
-  const { authState } = useExtensionAuth();
-  const fallbackPath = !authState.hasOnboarded
-    ? '/onboarding'
-    : authState.isUnlocked
-      ? '/home'
-      : '/unlock';
+  const { authState, isUnlocked } = useExtensionAuth();
+  const fallbackPath = !authState.hasOnboarded ? '/onboarding' : isUnlocked ? '/home' : '/unlock';
 
   return (
     <PageScaffold

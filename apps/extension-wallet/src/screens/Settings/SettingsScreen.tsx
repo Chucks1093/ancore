@@ -88,6 +88,7 @@ export function SettingsScreen() {
 
   function handleNetworkChange(network: Network) {
     updateSettings({ network });
+    if (network === 'local') return;
     void setRuntimeNetwork(network);
   }
 

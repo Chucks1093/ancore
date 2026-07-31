@@ -305,7 +305,7 @@ export function SendScreen({
         <button
           type="button"
           className={cn('wallet-pill-btn mt-2')}
-          disabled={Boolean(memoWarning) || send.loading}
+          disabled={Boolean(memoWarning) || send.submitting}
           onClick={() => void handleReview()}
         >
           Continue
