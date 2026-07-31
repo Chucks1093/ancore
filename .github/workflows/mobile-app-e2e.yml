@@ -17,7 +17,7 @@ permissions:
 jobs:
   test-ios:
     name: iOS E2E Tests
-    runs-on: macos-13
+    runs-on: macos-14
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -203,13 +203,15 @@ jobs:
     steps:
       - name: Check test status
         run: |
-          echo "### E2E Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "### E2E Test Results" >> "$GITHUB_STEP_SUMMARY"
           if [ "${{ needs.test-ios.result }}" = "success" ] && [ "${{ needs.test-android.result }}" = "success" ]; then
-            echo "✅ All E2E tests passed" >> $GITHUB_STEP_SUMMARY
+            echo "✅ All E2E tests passed" >> "$GITHUB_STEP_SUMMARY"
             exit 0
           else
-            echo "❌ Some E2E tests failed" >> $GITHUB_STEP_SUMMARY
-            echo "- iOS: ${{ needs.test-ios.result }}" >> $GITHUB_STEP_SUMMARY
-            echo "- Android: ${{ needs.test-android.result }}" >> $GITHUB_STEP_SUMMARY
+            {
+              echo "❌ Some E2E tests failed"
+              echo "- iOS: ${{ needs.test-ios.result }}"
+              echo "- Android: ${{ needs.test-android.result }}"
+            } >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
