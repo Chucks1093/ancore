@@ -191,7 +191,7 @@ export const SendPage: React.FC = () => {
 
         <button
           className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          disabled={send.loading || !!liveRecipientError}
+          disabled={send.loading || !!liveRecipientError || !recipient.trim() || !amount.trim() || Number(amount) <= 0}
           type="submit"
         >
           {send.loading ? (

@@ -118,13 +118,18 @@ export function PasswordScreen({ flow, onBack = noop, onCancel = noop, onComplet
       )}
 
       <div className="flex gap-3">
-        <button onClick={onBack} type="button">
+        <button aria-label="Go back" onClick={onBack} type="button">
           Back
         </button>
-        <button onClick={onCancel} type="button">
+        <button aria-label="Cancel wallet setup" onClick={onCancel} type="button">
           Cancel
         </button>
-        <button disabled={!canContinue} onClick={handleContinue} type="button">
+        <button
+          aria-label={submitting ? 'Setting up wallet' : 'Continue wallet setup'}
+          disabled={!canContinue}
+          onClick={handleContinue}
+          type="button"
+        >
           {submitting ? 'Setting up...' : 'Continue'}
         </button>
       </div>
