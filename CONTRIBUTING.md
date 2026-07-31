@@ -118,6 +118,29 @@ Wallet contributors: see [docs/wallets/FREIGHTER_COMPARISON.md](docs/wallets/FRE
    pnpm test
    ```
 
+   To run tests for a single package only, use `pnpm --filter`:
+
+   ```bash
+   # Run tests for a specific package (use the package name from its package.json)
+   pnpm --filter @ancore/core-sdk test
+   pnpm --filter @ancore/wallet-shared test
+   pnpm --filter @ancore/ui-kit test
+   ```
+
+   To filter down to a single test file or pattern within a package:
+
+   ```bash
+   # Jest-based packages — pass --testPathPattern after a double dash
+   pnpm --filter @ancore/core-sdk test -- --testPathPattern=secure-storage
+
+   # Vitest-based packages (e.g. ui-kit) — pass the file glob directly
+   pnpm --filter @ancore/ui-kit test -- src/components/Button
+   ```
+
+   Running full `turbo test` on every save is slow in a large monorepo. Use the
+   package-scoped commands above during development and save the full suite for
+   pre-push verification.
+
 4. Run linting:
 
    ```bash

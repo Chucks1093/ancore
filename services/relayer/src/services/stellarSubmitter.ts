@@ -1,15 +1,9 @@
 import { rpc, TransactionBuilder, Transaction } from '@stellar/stellar-sdk';
 import { SimulationFailedError, StellarClient } from '@ancore/stellar';
 import type { Network } from '@ancore/types';
+import { NETWORK_PASSPHRASES } from '@ancore/wallet-shared';
 import type { TransactionSubmitterContract, TransactionSubmissionResult } from '../types';
 import { getEnv } from '../config/env';
-
-const NETWORK_PASSPHRASES: Record<Network, string> = {
-  testnet: 'Test SDF Network ; September 2015',
-  mainnet: 'Public Global Stellar Network ; September 2015',
-  futurenet: 'Test SDF Future Network ; October 2022',
-  local: 'Standalone Network ; February 2017',
-};
 
 export interface StellarSubmitterConfig {
   network: Network;
