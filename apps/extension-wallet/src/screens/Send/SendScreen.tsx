@@ -16,7 +16,7 @@ import { StatusScreen } from '@/screens/Send/StatusScreen';
 import { AiDraftPanel } from '@/screens/Send/AiDraftPanel';
 import type { AgentDraftIntent } from '@/services/ai-agent-client';
 import { TransferNoteInput } from '@/components/TransferNoteInput';
-import { AlertCircle, ArrowLeftRight, Delete, Sparkles } from 'lucide-react';
+import { AlertCircle, ArrowLeftRight, Delete, Sparkles, X } from 'lucide-react';
 import {
   ScheduleControls,
   createDefaultScheduleConfig,
@@ -171,14 +171,24 @@ export function SendScreen({
     <div className="wallet-sheet">
       <header className="wallet-header flex items-center justify-between">
         <h1 className="wallet-title">Send</h1>
-        <button
-          type="button"
-          onClick={() => setShowAiDraft((current) => !current)}
-          className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[12px] font-medium text-foreground transition-colors hover:bg-white/15"
-        >
-          <Sparkles className="h-3.5 w-3.5 text-teal-300" aria-hidden />
-          {showAiDraft ? 'Manual form' : 'Draft with AI'}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setShowAiDraft((current) => !current)}
+            className="flex items-center gap-1.5 rounded-full bg-white/[0.07] px-3 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden />
+            {showAiDraft ? 'Manual' : 'AI draft'}
+          </button>
+          <button
+            type="button"
+            className="wallet-icon-btn"
+            aria-label="Close send"
+            onClick={() => window.history.back()}
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-5 pb-6">
@@ -194,7 +204,7 @@ export function SendScreen({
         <div className="wallet-card space-y-5">
           <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#14b8a6] text-sm font-bold text-white">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
                 X
               </div>
               <div className="min-w-0">
@@ -219,7 +229,7 @@ export function SendScreen({
             </p>
             {approxUsd && (
               <p className="mt-2 flex items-center justify-center gap-1 text-[13px] text-muted-foreground">
-                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-teal-500/20 text-[10px] text-teal-300">
+                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/15 text-[10px] text-primary">
                   $
                 </span>
                 {approxUsd}

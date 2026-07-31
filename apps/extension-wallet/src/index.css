@@ -112,8 +112,10 @@
 
   .wallet-pill-btn {
     @apply flex h-14 w-full items-center justify-center rounded-full
-      bg-primary text-primary-foreground text-[15px] font-semibold
+      bg-white text-black text-[15px] font-semibold
       active:scale-[0.98]
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary
+      focus-visible:ring-offset-2 focus-visible:ring-offset-background
       disabled:cursor-not-allowed disabled:opacity-40;
     transition:
       transform 140ms var(--ease-out),

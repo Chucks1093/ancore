@@ -106,12 +106,15 @@ function RootRedirect() {
 }
 
 function ProtectedLayout() {
+  const location = useLocation();
+  const isImmersiveRoute = ['/send', '/receive', '/sign-transaction'].includes(location.pathname);
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <div className="flex-1 overflow-y-auto">
         <Outlet />
       </div>
-      <NavBar />
+      {!isImmersiveRoute && <NavBar />}
     </div>
   );
 }
@@ -367,15 +370,7 @@ function HomeScreen() {
 }
 
 function SendScreenRoute() {
-  return (
-    <PageScaffold
-      eyebrow="Payments"
-      title="Send"
-      description="Send now or schedule a one-time or recurring transfer."
-    >
-      <SendFlowScreen />
-    </PageScaffold>
-  );
+  return <SendFlowScreen />;
 }
 
 function ScheduledTransfersRoute() {
@@ -401,6 +396,7 @@ function ReceiveScreen() {
         authState.accountAddress !== 'GCFX...WALLET' ? authState.accountAddress : null
       }
       network={network}
+      walletName={authState.walletName}
       onBack={() => window.history.back()}
     />
   );
