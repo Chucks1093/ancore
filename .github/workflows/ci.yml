@@ -50,6 +50,26 @@ jobs:
       - name: Validate pnpm audit allowlist
         run: node scripts/check-audit-allowlist.js
 
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@1.81.0
+
+      - name: Cache cargo-audit
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/bin/cargo-audit
+          key: ${{ runner.os }}-cargo-audit-v0.21
+
+      - name: Install cargo-audit
+        run: which cargo-audit || cargo install --locked cargo-audit
+
+      - name: Cargo audit contracts
+        working-directory: ./contracts
+        run: cargo audit
+
+      - name: Cargo audit indexer
+        working-directory: ./services/indexer
+        run: cargo audit
+
   install-scripts:
     name: Install Script Policy
     runs-on: ubuntu-latest
