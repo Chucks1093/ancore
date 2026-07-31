@@ -6,6 +6,7 @@
  */
 
 /// <reference types="chrome" />
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference -- ambient global declarations have no importable binding
 /// <reference path="../types/webextension-global.d.ts" />
 // This module is compiled as part of every consumer's program (@ancore/* maps to
 // source, not dist). Consumers that are not browser targets -- e.g. the React

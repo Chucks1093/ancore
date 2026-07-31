@@ -6,4 +6,5 @@
  * `browser` global in the monorepo.
  */
 
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference -- ambient global declarations have no importable binding
 /// <reference path="../../../packages/core-sdk/src/types/webextension-global.d.ts" />
