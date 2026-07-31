@@ -17,12 +17,10 @@ describe('POST /agent/draft-intent — LLM integration, guardrail, and audit log
   it('falls back to the deterministic source when ANTHROPIC_API_KEY is unset (no real API call)', async () => {
     expect(process.env['ANTHROPIC_API_KEY']).toBeUndefined();
 
-    const res = await request(app)
-      .post('/agent/draft-intent')
-      .send({
-        prompt: 'Send 10 XLM to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
-        accountId: 'GABC123',
-      });
+    const res = await request(app).post('/agent/draft-intent').send({
+      prompt: 'Send 10 XLM to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
+      accountId: 'GABC123',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.status).toBe('draft');
@@ -43,12 +41,10 @@ describe('POST /agent/draft-intent — LLM integration, guardrail, and audit log
   });
 
   it('writes an audit log entry with timestamp, accountId, source, intentType, and riskLevel', async () => {
-    await request(app)
-      .post('/agent/draft-intent')
-      .send({
-        prompt: 'Send 10 XLM to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
-        accountId: 'GABC123',
-      });
+    await request(app).post('/agent/draft-intent').send({
+      prompt: 'Send 10 XLM to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
+      accountId: 'GABC123',
+    });
 
     const auditCall = infoSpy.mock.calls.find(([, message]) => message === 'draft_intent_audit');
     expect(auditCall).toBeDefined();
