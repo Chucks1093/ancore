@@ -88,7 +88,7 @@ export function SettingsScreen() {
 
   function handleNetworkChange(network: Network) {
     updateSettings({ network });
-    setRuntimeNetwork(network);
+    void setRuntimeNetwork(network);
   }
 
   if (view === 'network') {

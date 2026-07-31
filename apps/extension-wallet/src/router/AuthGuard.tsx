@@ -70,13 +70,20 @@ function hasExtensionStorage(): boolean {
 export function ExtensionAuthProvider({
   children,
   unlockVerifier,
+  initiallyUnlocked = false,
 }: {
   children: React.ReactNode;
   unlockVerifier?: UnlockVerifier;
+  /**
+   * Test-only seam. `isUnlocked` is deliberately in-memory (never persisted),
+   * so tests that need to start past the lock screen cannot arrange it via
+   * storage the way they arrange `authState`.
+   */
+  initiallyUnlocked?: boolean;
 }) {
   const [authState, setAuthState] = React.useState<AuthState>(readAuthState);
   const [unlockError, setUnlockError] = React.useState<string | null>(null);
-  const [isUnlocked, setIsUnlocked] = React.useState(false);
+  const [isUnlocked, setIsUnlocked] = React.useState(initiallyUnlocked);
   const [isInitializing, setIsInitializing] = React.useState(true);
 
   React.useEffect(() => {

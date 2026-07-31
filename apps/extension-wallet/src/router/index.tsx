@@ -824,14 +824,19 @@ export function ExtensionRouter() {
 export function ExtensionRouterTestHarness({
   initialEntries,
   unlockVerifier,
+  initiallyUnlocked,
 }: {
   initialEntries: string[];
   unlockVerifier?: UnlockVerifier;
+  initiallyUnlocked?: boolean;
 }) {
   return (
     <MemoryRouter initialEntries={initialEntries}>
       <NotificationProvider>
-        <ExtensionAuthProvider unlockVerifier={unlockVerifier}>
+        <ExtensionAuthProvider
+          unlockVerifier={unlockVerifier}
+          initiallyUnlocked={initiallyUnlocked}
+        >
           <ExtensionRouterContent />
         </ExtensionAuthProvider>
       </NotificationProvider>

@@ -16,7 +16,7 @@ async function waitForAuthReady() {
 function renderRouter(
   pathname: string,
   authState = DEFAULT_AUTH_STATE,
-  options?: { unlockVerifier?: UnlockVerifier }
+  options?: { unlockVerifier?: UnlockVerifier; initiallyUnlocked?: boolean }
 ) {
   resetSharedStorageManagerForTests();
   window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authState));
@@ -24,7 +24,17 @@ function renderRouter(
     <ExtensionRouterTestHarness
       initialEntries={[pathname]}
       unlockVerifier={options?.unlockVerifier}
+      initiallyUnlocked={options?.initiallyUnlocked}
     />
+  );
+}
+
+/** Renders an onboarded, unlocked session — the state behind the AuthGuard. */
+function renderUnlockedRouter(pathname: string) {
+  return renderRouter(
+    pathname,
+    { ...DEFAULT_AUTH_STATE, hasOnboarded: true },
+    { initiallyUnlocked: true }
   );
 }
 
@@ -91,10 +101,7 @@ describe('extension router', () => {
 
   it('navigates between protected routes and updates titles', async () => {
     const user = userEvent.setup();
-    renderRouter('/home', {
-      ...DEFAULT_AUTH_STATE,
-      hasOnboarded: true,
-    });
+    renderUnlockedRouter('/home');
 
     await waitForAuthReady();
     await user.click(screen.getByRole('link', { name: /settings/i }));
@@ -105,10 +112,7 @@ describe('extension router', () => {
 
   it('shows a 404 screen for unknown routes and recovers to the right fallback', async () => {
     const user = userEvent.setup();
-    renderRouter('/not-a-real-route', {
-      ...DEFAULT_AUTH_STATE,
-      hasOnboarded: true,
-    });
+    renderUnlockedRouter('/not-a-real-route');
 
     await waitForAuthReady();
     expect(await screen.findByRole('heading', { name: '404' })).toBeInTheDocument();
@@ -121,10 +125,7 @@ describe('extension router', () => {
 
   it('supports back-style navigation for nested routes', async () => {
     const user = userEvent.setup();
-    renderRouter('/session-keys', {
-      ...DEFAULT_AUTH_STATE,
-      hasOnboarded: true,
-    });
+    renderUnlockedRouter('/session-keys');
 
     await waitForAuthReady();
     expect(
@@ -171,11 +172,6 @@ describe('extension transaction history', () => {
     document.title = 'Ancore Extension';
   });
 
-  const unlockedAuthState = {
-    ...DEFAULT_AUTH_STATE,
-    hasOnboarded: true,
-  };
-
   const SAMPLE_ENTRIES: HistoryEntry[] = [
     {
       id: '1',
@@ -204,7 +200,7 @@ describe('extension transaction history', () => {
   ];
 
   it('shows no-account placeholder when no smart account is configured', async () => {
-    renderRouter('/history', unlockedAuthState);
+    renderUnlockedRouter('/history');
     await waitForAuthReady();
 
     expect(await screen.findByText('No account configured')).toBeInTheDocument();

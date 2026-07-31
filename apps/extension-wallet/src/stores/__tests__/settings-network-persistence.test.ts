@@ -129,12 +129,18 @@ describe('Settings Store - Network Persistence', () => {
     it('handles storage errors gracefully when loading network', async () => {
       const getItemSpy = vi
         .spyOn(extensionStorage, 'getItem')
-        .mockRejectedValue(new Error('Storage error'));
+        .mockImplementation(async (name: string) => {
+          if (name === 'ancore-last-successful-network') {
+            throw new Error('Storage error');
+          }
+          return null;
+        });
 
-      // Should not throw
-      await expect(
-        extensionStorage.getItem('ancore-last-successful-network')
-      ).resolves.not.toThrow();
+      // Hydration must survive a failed last-successful-network read, and must
+      // leave the store's actions intact.
+      await expect(useSettingsStore.persist.rehydrate()).resolves.not.toThrow();
+      expect(useSettingsStore.getState().network).toBe(DEFAULTS.network);
+      expect(typeof useSettingsStore.getState().setNetwork).toBe('function');
 
       getItemSpy.mockRestore();
     });
