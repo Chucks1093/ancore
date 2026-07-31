@@ -27,6 +27,7 @@
 - [Extension security](../../docs/security/extension-wallet.md)
 - [Extension build troubleshooting](../../docs/troubleshooting/extension-build.md)
 - [E2E smoke guide](../../docs/testing/extension-e2e-smoke.md)
+- [Handlers coverage thresholds](../../docs/testing/extension-handlers-coverage.md)
 - [Contributing (monorepo)](../../CONTRIBUTING.md)
 - [System architecture](../../docs/architecture/OVERVIEW.md)
 - Freighter reference: [AGENTS.md](https://github.com/stellar/freighter/blob/master/AGENTS.md), [API docs](https://docs.freighter.app)
