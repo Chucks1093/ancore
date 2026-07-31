@@ -7,7 +7,8 @@
     "build": "tsc --project tsconfig.json",
     "test": "jest --coverage",
     "lint": "eslint src/",
-    "check:log-redaction": "node scripts/check-log-redaction.js"
+    "check:log-redaction": "node scripts/check-log-redaction.js",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "ancore",
