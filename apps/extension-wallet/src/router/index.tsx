@@ -12,7 +12,18 @@ import {
   useNavigate,
   useSearchParams,
 } from 'react-router-dom';
-import { ArrowLeft, Lock, PlusCircle } from 'lucide-react';
+import {
+  ArrowDownLeft,
+  ArrowLeft,
+  ArrowUpRight,
+  Clock3,
+  History,
+  KeyRound,
+  Lock,
+  PlusCircle,
+  Wallet,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { NotificationProvider } from '@ancore/ui-kit';
 import {
   AuthGuard,
@@ -76,7 +87,7 @@ function PopupFrame({ children }: { children: React.ReactNode }) {
 
   return (
     <div
-      className={`mx-auto min-h-screen w-[360px] bg-background text-foreground shadow-xl ${displayPreference === 'compact' ? 'text-[13px]' : ''}`.trim()}
+      className={`mx-auto min-h-screen w-[360px] bg-background text-foreground ${displayPreference === 'compact' ? 'text-[13px]' : ''}`.trim()}
       data-display-preference={displayPreference}
     >
       {children}
@@ -125,12 +136,12 @@ function PageScaffold({
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="bg-gradient-to-br from-primary to-purple-800 px-5 pb-7 pt-8 text-white">
+      <header className="px-5 pb-4 pt-5">
         <div className="flex items-center justify-between">
           {backTo ? (
             <button
               aria-label="Go back"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+              className="wallet-icon-btn h-9 w-9 bg-card"
               onClick={() => navigate(backTo)}
               type="button"
             >
@@ -139,19 +150,16 @@ function PageScaffold({
           ) : (
             <span className="h-9 w-9" />
           )}
-          {/* Persistent network badge — always visible so users know which network they are on */}
           <NetworkBadge network={network} />
           {rightAction ?? <span className="h-9 w-9" />}
         </div>
-        {eyebrow ? (
-          <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/70">
-            {eyebrow}
-          </p>
-        ) : null}
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">{title}</h1>
-        <p className="mt-1 text-sm text-white/70">{description}</p>
+        {eyebrow ? <p className="wallet-kicker mt-6">{eyebrow}</p> : null}
+        <h1 className="mt-2 text-[26px] font-semibold leading-tight tracking-[-0.03em]">{title}</h1>
+        <p className="mt-1.5 max-w-[310px] text-[13px] leading-5 text-muted-foreground">
+          {description}
+        </p>
       </header>
-      <main className="flex-1 space-y-4 p-4">{children}</main>
+      <main className="flex-1 space-y-3 px-4 pb-5 pt-2">{children}</main>
     </div>
   );
 }
@@ -166,9 +174,13 @@ function Card({
   children?: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-      {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+    <section className="wallet-card">
+      <h2 className="text-[15px] font-semibold text-foreground">{title}</h2>
+      {description ? (
+        <p className="mt-1 overflow-hidden text-ellipsis whitespace-nowrap text-[12px] text-muted-foreground">
+          {description}
+        </p>
+      ) : null}
       {children ? <div className="mt-4">{children}</div> : null}
     </section>
   );
@@ -182,22 +194,36 @@ function PrimaryButton({
   return (
     <button
       {...props}
-      className={[
-        'inline-flex w-full items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50',
-        className ?? '',
-      ].join(' ')}
+      className={['wallet-pill-btn h-12', className ?? ''].join(' ')}
       type={type}
     />
   );
 }
 
-function SecondaryLink({ to, children }: { to: string; children: React.ReactNode }) {
+function SecondaryLink({
+  to,
+  children,
+  icon: Icon,
+}: {
+  to: string;
+  children: React.ReactNode;
+  icon?: LucideIcon;
+}) {
   return (
     <Link
-      className="inline-flex w-full items-center justify-center rounded-xl border border-border px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-accent"
+      className="group flex min-h-[82px] flex-col justify-between rounded-[18px] border border-border/70 bg-card p-3.5 text-left active:scale-[0.98]"
       to={to}
     >
-      {children}
+      {Icon ? (
+        <>
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+            <Icon className="h-4 w-4" strokeWidth={2.2} />
+          </span>
+          <span className="mt-3 text-[13px] font-medium text-foreground">{children}</span>
+        </>
+      ) : (
+        <span className="m-auto text-[13px] font-medium text-foreground">{children}</span>
+      )}
     </Link>
   );
 }
@@ -226,16 +252,21 @@ function UnlockScreen() {
 
   return (
     <PageScaffold
-      eyebrow="Wallet locked"
+      eyebrow="Welcome back"
       title="Unlock wallet"
-      description="Use the local demo unlock flow to exercise protected navigation and route redirects."
+      description="Enter your password to continue securely."
     >
-      <Card title={authState.walletName} description={`Address: ${authState.accountAddress}`}>
+      <div className="mb-2 flex justify-center py-2">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Lock className="h-7 w-7" strokeWidth={1.8} />
+        </div>
+      </div>
+      <Card title={authState.walletName} description={authState.accountAddress}>
         <form className="space-y-4" onSubmit={handleUnlock}>
           <label className="block text-sm font-medium text-foreground">
             Password
             <input
-              className="mt-2 w-full rounded-xl border border-border bg-background px-3 py-3 text-sm outline-none transition focus:border-primary"
+              className="mt-2 h-12 w-full rounded-[14px] border border-border bg-[hsl(var(--surface-sunken))] px-4 text-sm outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary/70 focus:ring-2 focus:ring-primary/10"
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Enter your password"
               type="password"
@@ -266,13 +297,13 @@ function HomeScreen() {
 
   return (
     <PageScaffold
-      eyebrow="Dashboard"
-      title="Home"
-      description="Your popup landing screen with direct links into the main wallet flows."
+      eyebrow="Portfolio"
+      title="Your wallet"
+      description="Everything you need, without the noise."
       rightAction={
         <button
           aria-label="Lock wallet"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+          className="wallet-icon-btn h-9 w-9 bg-card"
           onClick={lockWallet}
           type="button"
         >
@@ -280,26 +311,51 @@ function HomeScreen() {
         </button>
       }
     >
-      <Card
-        title={authState.walletName}
-        description={`Demo session wallet • ${network} • ${environment}`}
-      >
-        <div className="rounded-xl bg-accent px-4 py-3 text-sm text-muted-foreground">
-          <p className="font-medium text-foreground">Available balance</p>
-          <p className="mt-1 text-2xl font-bold text-foreground">1,245.80 XLM</p>
-          <p className="mt-1">{authState.accountAddress}</p>
+      <section className="overflow-hidden rounded-[22px] border border-primary/15 bg-card p-5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Wallet className="h-[18px] w-[18px]" />
+            </span>
+            <div>
+              <p className="text-[13px] font-medium text-foreground">{authState.walletName}</p>
+              <p className="text-[11px] capitalize text-muted-foreground">{environment}</p>
+            </div>
+          </div>
+          <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+            {network}
+          </span>
         </div>
-      </Card>
+        <div className="mt-8">
+          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            Available balance
+          </p>
+          <p className="mt-2 text-[34px] font-semibold leading-none tracking-[-0.04em] text-foreground">
+            1,245.80 <span className="text-[17px] font-medium text-muted-foreground">XLM</span>
+          </p>
+          <p className="wallet-address mt-4">{authState.accountAddress}</p>
+        </div>
+      </section>
       <div className="grid grid-cols-2 gap-3">
-        <SecondaryLink to="/send">Send funds</SecondaryLink>
-        <SecondaryLink to="/scheduled">Scheduled transfers</SecondaryLink>
-        <SecondaryLink to="/receive">Receive funds</SecondaryLink>
-        <SecondaryLink to="/history">View history</SecondaryLink>
-        <SecondaryLink to="/session-keys">Session keys</SecondaryLink>
+        <SecondaryLink to="/send" icon={ArrowUpRight}>
+          Send
+        </SecondaryLink>
+        <SecondaryLink to="/receive" icon={ArrowDownLeft}>
+          Receive
+        </SecondaryLink>
+        <SecondaryLink to="/scheduled" icon={Clock3}>
+          Scheduled
+        </SecondaryLink>
+        <SecondaryLink to="/history" icon={History}>
+          Activity
+        </SecondaryLink>
+        <SecondaryLink to="/session-keys" icon={KeyRound}>
+          Session keys
+        </SecondaryLink>
       </div>
       {import.meta.env.DEV && (
         <button
-          className="mt-4 w-full rounded-xl border border-dashed border-yellow-500/50 px-4 py-3 text-sm font-semibold text-yellow-600 transition hover:bg-yellow-500/10"
+          className="mt-2 w-full rounded-[14px] border border-dashed border-border px-4 py-3 text-[12px] font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
           onClick={() => chrome.runtime.sendMessage({ type: 'DEV_OPEN_APPROVAL' })}
           type="button"
         >

@@ -120,7 +120,7 @@ describe('extension router', () => {
 
     await user.click(screen.getByRole('link', { name: /go back to safety/i }));
 
-    expect(await screen.findByRole('heading', { name: /home/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /your wallet/i })).toBeInTheDocument();
   });
 
   it('supports back-style navigation for nested routes', async () => {

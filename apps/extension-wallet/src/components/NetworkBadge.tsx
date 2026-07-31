@@ -18,18 +18,18 @@ interface NetworkBadgeProps {
 
 const NETWORK_STYLES: Record<NetworkMode, { dot: string; badge: string; label: string }> = {
   mainnet: {
-    dot: 'bg-green-400',
-    badge: 'border-green-400/40 bg-green-400/15 text-green-300',
+    dot: 'bg-emerald-400',
+    badge: 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300',
     label: 'Mainnet',
   },
   testnet: {
-    dot: 'bg-yellow-400',
-    badge: 'border-yellow-400/40 bg-yellow-400/15 text-yellow-300',
+    dot: 'bg-amber-300',
+    badge: 'border-amber-300/20 bg-amber-300/10 text-amber-200',
     label: 'Testnet',
   },
   futurenet: {
-    dot: 'bg-purple-400',
-    badge: 'border-purple-400/40 bg-purple-400/15 text-purple-300',
+    dot: 'bg-sky-400',
+    badge: 'border-sky-400/20 bg-sky-400/10 text-sky-300',
     label: 'Futurenet',
   },
 };
@@ -40,9 +40,9 @@ export function NetworkBadge({ network, className = '' }: NetworkBadgeProps) {
   return (
     <span
       aria-label={`Active network: ${styles.label}`}
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest ${styles.badge} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] ${styles.badge} ${className}`}
     >
-      <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${styles.dot} animate-pulse`} />
+      <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${styles.dot}`} />
       {styles.label}
     </span>
   );
