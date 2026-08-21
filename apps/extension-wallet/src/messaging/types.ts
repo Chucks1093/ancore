@@ -88,6 +88,21 @@ export interface Messages {
       network: string;
     };
   };
+  /** dApp requests the wallet to sign an auth entry. */
+  EXTERNAL_SIGN_AUTH_ENTRY: {
+    request: { authEntry: string; origin: string; networkPassphrase?: string };
+    response: { signedAuthEntry: string };
+  };
+  /** dApp requests the wallet to sign an arbitrary message. */
+  EXTERNAL_SIGN_MESSAGE: {
+    request: { message: string; origin: string };
+    response: { signature: string };
+  };
+  /** dApp requests a time-limited session key. */
+  EXTERNAL_REQUEST_SESSION_KEY: {
+    request: { origin: string; expiresAt: number; permissions: number };
+    response: { publicKey: string; expiresAt: number };
+  };
 }
 
 /** Union of all valid message type names */

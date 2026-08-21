@@ -129,14 +129,14 @@ storage?.onChanged?.addListener((changes, areaName) => {
 
     // Check if auto-lock settings changed
     if (newSettings?.autoLockMinutes !== oldSettings?.autoLockMinutes) {
-      console.info(`${logPrefix} auto-lock settings changed`, {
+      log.info('auto-lock settings changed', {
         from: oldSettings?.autoLockMinutes,
         to: newSettings?.autoLockMinutes,
       });
 
       // Refresh session expiry with new TTL if currently unlocked
       void refreshSessionExpiry().then(() => {
-        console.info(`${logPrefix} session expiry refreshed with new auto-lock TTL`);
+        log.info('session expiry refreshed with new auto-lock TTL');
       });
     }
   }
@@ -152,6 +152,23 @@ registerAllExternalHandlers();
 /**
  * Handle EXTERNAL_API_REQUEST messages from content script.
  * These are requests from dApps to interact with the wallet.
+ *
+ * SECURITY: This handler is the authoritative second layer of defence.
+ * The content-script prefilter is the first layer; both must be correct.
+ *
+ * Checks (fail closed on any failure):
+ *   1. Message type must be exactly 'EXTERNAL_API_REQUEST'.
+ *   2. requestId must be a non-empty string (correlation, not trusted).
+ *   3. origin must be a non-empty string.
+ *   4. method must be a non-empty string that resolves to a registered handler.
+ *   5. sender.origin (browser-provided) must match the claimed origin when
+ *      present — prevents a compromised content script from escalating to a
+ *      different origin's permissions.
+ *   6. Every privileged handler independently validates the allowlist.
+ *      This file does NOT bypass that check.
+ *
+ * Error messages returned to the content script via sendResponse are generic
+ * for validation failures so internal routing details are not exposed.
  */
 chrome.runtime.onMessage.addListener(
   (
@@ -159,37 +176,67 @@ chrome.runtime.onMessage.addListener(
     sender: { url?: string; origin?: string; tab?: { id?: number } },
     sendResponse: (response: unknown) => void
   ) => {
-    const request = message as ExternalApiRequest;
-
-    if (request.type !== 'EXTERNAL_API_REQUEST') {
+    // ── 1. Type guard — ignore non-external messages.
+    if (
+      !message ||
+      typeof message !== 'object' ||
+      (message as Partial<ExternalApiRequest>).type !== 'EXTERNAL_API_REQUEST'
+    ) {
       return false;
     }
 
+    const request = message as Partial<ExternalApiRequest>;
     const { method, requestId, params, origin } = request;
 
-    // Validate origin
+    // ── 2. requestId must be a non-empty string.
+    if (!requestId || typeof requestId !== 'string') {
+      // Cannot send a useful response without a requestId; drop silently.
+      log.warn('EXTERNAL_API_REQUEST dropped: missing requestId');
+      return false;
+    }
+
+    // ── 3. origin must be a non-empty string.
     if (!origin || typeof origin !== 'string') {
       sendResponse({
         type: 'EXTERNAL_API_RESPONSE',
         requestId,
         ok: false,
-        error: 'Invalid origin',
+        error: 'Invalid request',
       });
       return true;
     }
 
-    // Validate sender origin matches
-    if (sender.origin && sender.origin !== origin) {
+    // ── 4. method must be a non-empty string.
+    if (!method || typeof method !== 'string') {
       sendResponse({
         type: 'EXTERNAL_API_RESPONSE',
         requestId,
         ok: false,
-        error: 'Origin mismatch',
+        error: 'Invalid request',
       });
       return true;
     }
 
-    // Dispatch to handler
+    // ── 5. Sender-origin check (browser-provided; cannot be forged by the page).
+    //       When the browser populates sender.origin it MUST match the claimed
+    //       origin or we reject — a mismatch means something is wrong.
+    if (sender.origin && sender.origin !== origin) {
+      log.warn('EXTERNAL_API_REQUEST rejected: sender.origin mismatch', {
+        senderOrigin: sender.origin,
+        claimedOrigin: origin,
+      });
+      sendResponse({
+        type: 'EXTERNAL_API_RESPONSE',
+        requestId,
+        ok: false,
+        error: 'Invalid request',
+      });
+      return true;
+    }
+
+    // ── 6. Dispatch to the registered external handler.
+    //       `dispatchExternalRequest` throws for unknown methods (fail closed).
+    //       Each handler independently verifies the allowlist.
     void dispatchExternalRequest(method as ExternalApiMethodName, {
       origin,
       params,
