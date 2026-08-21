@@ -60,7 +60,7 @@ fn validate_account_id(id: &str) -> Result<()> {
             "account_id cannot be empty".to_string(),
         ));
     }
-    
+
     // Validate with stellar-strkey
     match stellar_strkey::Strkey::from_string(id) {
         Ok(stellar_strkey::Strkey::PublicKeyEd25519(_)) => Ok(()),
