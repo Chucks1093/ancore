@@ -18,7 +18,8 @@
 //! - `timelock_updated`: (new_delay_seconds)
 
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, Address, BytesN, Env, Symbol, Val, Vec,
+    contract, contracterror, contractimpl, contracttype, Address, BytesN, Env, String, Symbol, Val,
+    Vec,
 };
 
 #[contracterror]
@@ -34,6 +35,10 @@ pub enum UpgradeError {
     ProposalAlreadyCancelled = 8,
     TimelockNotElapsed = 9,
     ArithmeticOverflow = 10,
+    WasmTooSmall = 11,
+    WasmTooLarge = 12,
+    MissingRequiredExport = 13,
+    ForbiddenImportDetected = 14,
 }
 
 #[contracttype]
@@ -54,8 +59,41 @@ pub enum DataKey {
     NextProposalId,
     TargetAccount,
     Proposal(u32),
+    ContractValidation,
 }
 
+/// Policy rules checked against the proposer's WASM metadata attestation.
+///
+/// All fields default to permissive (0 / empty) when not explicitly configured:
+/// - `min_wasm_size = 0` disables the lower bound
+/// - `max_wasm_size = 0` disables the upper bound
+/// - empty `required_exports` skips the export whitelist check
+/// - empty `forbidden_imports` skips the import blacklist check
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct ContractValidation {
+    pub min_wasm_size: u32,
+    pub max_wasm_size: u32,
+    pub required_exports: Vec<String>,
+    pub forbidden_imports: Vec<String>,
+}
+
+/// Caller-supplied attestation about the proposed WASM blob.
+///
+/// Because Soroban contracts cannot parse raw WASM bytes from a hash at
+/// execution time, the proposer attests to the size, exports, and imports
+/// of the WASM they intend to deploy. Off-chain tooling (CI, multisig
+/// verification scripts) must independently verify that these values match
+/// the actual WASM referenced by `new_wasm_hash` before signing off.
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct WasmAttestation {
+    pub wasm_size: u32,
+    pub exports: Vec<String>,
+    pub imports: Vec<String>,
+}
+
+mod validation;
 pub mod factory;
 
 mod events {
@@ -122,15 +160,38 @@ impl UpgradeGovernor {
 
     /// Propose a new WASM upgrade for the target account.
     ///
+    /// `attestation` carries the proposer's claim about the WASM's size,
+    /// exports, and imports. These are validated on-chain against the stored
+    /// `ContractValidation` policy. Off-chain tooling must independently verify
+    /// that the attestation matches the actual WASM at `new_wasm_hash`.
+    ///
     /// Returns the proposal ID for tracking. The upgrade may only be executed
     /// after the configured timelock delay has elapsed.
-    pub fn propose_upgrade(env: Env, new_wasm_hash: BytesN<32>) -> Result<u32, UpgradeError> {
+    pub fn propose_upgrade(
+        env: Env,
+        new_wasm_hash: BytesN<32>,
+        attestation: WasmAttestation,
+    ) -> Result<u32, UpgradeError> {
         let owner = Self::require_owner(env.clone())?;
         owner.require_auth();
 
-        if new_wasm_hash == BytesN::from_array(&env, &[0u8; 32]) {
-            return Err(UpgradeError::InvalidWasmHash);
-        }
+        let policy: ContractValidation = env
+            .storage()
+            .instance()
+            .get(&DataKey::ContractValidation)
+            .unwrap_or(ContractValidation {
+                min_wasm_size: 0,
+                max_wasm_size: 0,
+                required_exports: Vec::new(&env),
+                forbidden_imports: Vec::new(&env),
+            });
+
+        validation::validate_wasm_metadata(
+            &env,
+            &new_wasm_hash,
+            &policy,
+            &attestation,
+        )?;
 
         let timelock_delay: u64 = env
             .storage()
@@ -308,6 +369,42 @@ impl UpgradeGovernor {
         env.storage().instance().get(&DataKey::Owner)
     }
 
+    /// Replace the WASM validation policy (owner-only).
+    ///
+    /// Policy takes effect for all proposals submitted after this call.
+    pub fn set_contract_validation(
+        env: Env,
+        validation: ContractValidation,
+    ) -> Result<(), UpgradeError> {
+        let owner = Self::require_owner(env.clone())?;
+        owner.require_auth();
+
+        env.storage()
+            .instance()
+            .set(&DataKey::ContractValidation, &validation);
+
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+
+        Ok(())
+    }
+
+    /// View the current WASM validation policy.
+    ///
+    /// Returns the permissive default if no policy has been configured.
+    pub fn get_contract_validation(env: Env) -> ContractValidation {
+        env.storage()
+            .instance()
+            .get(&DataKey::ContractValidation)
+            .unwrap_or(ContractValidation {
+                min_wasm_size: 0,
+                max_wasm_size: 0,
+                required_exports: Vec::new(&env),
+                forbidden_imports: Vec::new(&env),
+            })
+    }
+
     fn require_owner(env: Env) -> Result<Address, UpgradeError> {
         env.storage()
             .instance()
@@ -327,6 +424,14 @@ mod test {
     fn init(env: &Env, client: &UpgradeGovernorClient, owner: &Address, target: &Address) {
         env.mock_all_auths();
         client.initialize(owner, target, &10u64);
+    }
+
+    fn default_attestation(env: &Env) -> WasmAttestation {
+        WasmAttestation {
+            wasm_size: 4096,
+            exports: Vec::new(env),
+            imports: Vec::new(env),
+        }
     }
 
     #[test]
@@ -357,7 +462,8 @@ mod test {
         env.ledger().set_timestamp(1000);
 
         let wasm_hash = BytesN::from_array(&env, &[1u8; 32]);
-        let proposal_id = client.propose_upgrade(&wasm_hash);
+        let attestation = default_attestation(&env);
+        let proposal_id = client.propose_upgrade(&wasm_hash, &attestation);
 
         assert_eq!(proposal_id, 1);
 
@@ -389,7 +495,8 @@ mod test {
         env.ledger().set_timestamp(1000);
 
         let wasm_hash = BytesN::from_array(&env, &[1u8; 32]);
-        let proposal_id = client.propose_upgrade(&wasm_hash);
+        let attestation = default_attestation(&env);
+        let proposal_id = client.propose_upgrade(&wasm_hash, &attestation);
 
         // Attempt execution before timelock elapsed (1010) must fail
         let result = client.try_execute_upgrade(&proposal_id);
@@ -409,7 +516,8 @@ mod test {
         env.ledger().set_timestamp(1000);
 
         let wasm_hash = BytesN::from_array(&env, &[1u8; 32]);
-        let proposal_id = client.propose_upgrade(&wasm_hash);
+        let attestation = default_attestation(&env);
+        let proposal_id = client.propose_upgrade(&wasm_hash, &attestation);
 
         client.cancel_upgrade(&proposal_id);
 
@@ -464,8 +572,185 @@ mod test {
         init(&env, &client, &owner, &target);
 
         let zero_hash = BytesN::from_array(&env, &[0u8; 32]);
+        let attestation = default_attestation(&env);
 
-        let result = client.try_propose_upgrade(&zero_hash);
+        let result = client.try_propose_upgrade(&zero_hash, &attestation);
         assert!(matches!(result, Err(Ok(UpgradeError::InvalidWasmHash))));
+    }
+
+    #[test]
+    fn test_propose_rejects_wasm_below_min_size() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, UpgradeGovernor);
+        let client = UpgradeGovernorClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        let target = Address::generate(&env);
+        init(&env, &client, &owner, &target);
+
+        let policy = ContractValidation {
+            min_wasm_size: 1024,
+            max_wasm_size: 0,
+            required_exports: Vec::new(&env),
+            forbidden_imports: Vec::new(&env),
+        };
+        client.set_contract_validation(&policy);
+
+        let wasm_hash = BytesN::from_array(&env, &[1u8; 32]);
+        let attestation = WasmAttestation {
+            wasm_size: 512,
+            exports: Vec::new(&env),
+            imports: Vec::new(&env),
+        };
+
+        let result = client.try_propose_upgrade(&wasm_hash, &attestation);
+        assert!(matches!(result, Err(Ok(UpgradeError::WasmTooSmall))));
+    }
+
+    #[test]
+    fn test_propose_rejects_wasm_above_max_size() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, UpgradeGovernor);
+        let client = UpgradeGovernorClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        let target = Address::generate(&env);
+        init(&env, &client, &owner, &target);
+
+        let policy = ContractValidation {
+            min_wasm_size: 0,
+            max_wasm_size: 1024,
+            required_exports: Vec::new(&env),
+            forbidden_imports: Vec::new(&env),
+        };
+        client.set_contract_validation(&policy);
+
+        let wasm_hash = BytesN::from_array(&env, &[1u8; 32]);
+        let attestation = WasmAttestation {
+            wasm_size: 2048,
+            exports: Vec::new(&env),
+            imports: Vec::new(&env),
+        };
+
+        let result = client.try_propose_upgrade(&wasm_hash, &attestation);
+        assert!(matches!(result, Err(Ok(UpgradeError::WasmTooLarge))));
+    }
+
+    #[test]
+    fn test_propose_rejects_missing_required_export() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, UpgradeGovernor);
+        let client = UpgradeGovernorClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        let target = Address::generate(&env);
+        init(&env, &client, &owner, &target);
+
+        let mut required = Vec::new(&env);
+        required.push_back(String::from_str(&env, "upgrade"));
+        let policy = ContractValidation {
+            min_wasm_size: 0,
+            max_wasm_size: 0,
+            required_exports: required,
+            forbidden_imports: Vec::new(&env),
+        };
+        client.set_contract_validation(&policy);
+
+        let wasm_hash = BytesN::from_array(&env, &[1u8; 32]);
+        // attestation exports are empty — "upgrade" is missing
+        let attestation = WasmAttestation {
+            wasm_size: 4096,
+            exports: Vec::new(&env),
+            imports: Vec::new(&env),
+        };
+
+        let result = client.try_propose_upgrade(&wasm_hash, &attestation);
+        assert!(matches!(result, Err(Ok(UpgradeError::MissingRequiredExport))));
+    }
+
+    #[test]
+    fn test_propose_rejects_forbidden_import() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, UpgradeGovernor);
+        let client = UpgradeGovernorClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        let target = Address::generate(&env);
+        init(&env, &client, &owner, &target);
+
+        let mut forbidden = Vec::new(&env);
+        forbidden.push_back(String::from_str(&env, "dangerous_host_fn"));
+        let policy = ContractValidation {
+            min_wasm_size: 0,
+            max_wasm_size: 0,
+            required_exports: Vec::new(&env),
+            forbidden_imports: forbidden,
+        };
+        client.set_contract_validation(&policy);
+
+        let wasm_hash = BytesN::from_array(&env, &[1u8; 32]);
+        let mut imports = Vec::new(&env);
+        imports.push_back(String::from_str(&env, "dangerous_host_fn"));
+        let attestation = WasmAttestation {
+            wasm_size: 4096,
+            exports: Vec::new(&env),
+            imports,
+        };
+
+        let result = client.try_propose_upgrade(&wasm_hash, &attestation);
+        assert!(matches!(result, Err(Ok(UpgradeError::ForbiddenImportDetected))));
+    }
+
+    #[test]
+    fn test_propose_passes_with_all_constraints_met() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, UpgradeGovernor);
+        let client = UpgradeGovernorClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        let target = Address::generate(&env);
+        init(&env, &client, &owner, &target);
+
+        let mut required = Vec::new(&env);
+        required.push_back(String::from_str(&env, "upgrade"));
+        let mut forbidden = Vec::new(&env);
+        forbidden.push_back(String::from_str(&env, "dangerous_host_fn"));
+        let policy = ContractValidation {
+            min_wasm_size: 1024,
+            max_wasm_size: 1024 * 1024,
+            required_exports: required,
+            forbidden_imports: forbidden,
+        };
+        client.set_contract_validation(&policy);
+
+        let wasm_hash = BytesN::from_array(&env, &[1u8; 32]);
+        let mut exports = Vec::new(&env);
+        exports.push_back(String::from_str(&env, "upgrade"));
+        exports.push_back(String::from_str(&env, "get_version"));
+        let attestation = WasmAttestation {
+            wasm_size: 8192,
+            exports,
+            imports: Vec::new(&env),
+        };
+
+        let proposal_id = client.propose_upgrade(&wasm_hash, &attestation);
+        assert_eq!(proposal_id, 1);
+    }
+
+    #[test]
+    fn test_get_contract_validation_returns_permissive_default() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, UpgradeGovernor);
+        let client = UpgradeGovernorClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        let target = Address::generate(&env);
+        init(&env, &client, &owner, &target);
+
+        let v = client.get_contract_validation();
+        assert_eq!(v.min_wasm_size, 0);
+        assert_eq!(v.max_wasm_size, 0);
+        assert_eq!(v.required_exports.len(), 0);
+        assert_eq!(v.forbidden_imports.len(), 0);
     }
 }
