@@ -39,6 +39,10 @@ pub enum UpgradeError {
     WasmTooLarge = 12,
     MissingRequiredExport = 13,
     ForbiddenImportDetected = 14,
+    InvalidThreshold = 15,
+    InvalidSigner = 16,
+    InsufficientSignatures = 17,
+    DuplicateSignature = 18,
 }
 
 #[contracttype]
@@ -52,6 +56,9 @@ pub struct Proposal {
     pub cancelled: bool,
 }
 
+/// Maximum number of multisig signers.
+pub const MAX_SIGNERS: u32 = 50;
+
 #[contracttype]
 pub enum DataKey {
     Owner,
@@ -60,6 +67,8 @@ pub enum DataKey {
     TargetAccount,
     Proposal(u32),
     ContractValidation,
+    MultisigConfig,
+    SignatureRecord(u32, Address),
 }
 
 /// Policy rules checked against the proposer's WASM metadata attestation.
@@ -93,7 +102,20 @@ pub struct WasmAttestation {
     pub imports: Vec<String>,
 }
 
+/// Multisig governance configuration.
+///
+/// The `threshold` number of unique signers must approve a proposal (via
+/// `submit_multisig_signature`) before `execute_multisig_upgrade` will
+/// proceed. `threshold` must be ≥ 1 and ≤ `signers.len()`.
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct MultisigConfig {
+    pub threshold: u32,
+    pub signers: Vec<Address>,
+}
+
 mod validation;
+mod multisig;
 pub mod factory;
 
 mod events {
@@ -362,6 +384,175 @@ impl UpgradeGovernor {
     /// View the target account address.
     pub fn get_target_account(env: Env) -> Option<Address> {
         env.storage().instance().get(&DataKey::TargetAccount)
+    }
+
+    /// Configure the multisig governance policy (owner-only).
+    ///
+    /// `threshold` must be ≥ 1 and ≤ `signers.len()`. At most `MAX_SIGNERS`
+    /// addresses may be registered. The new policy applies immediately to any
+    /// proposal that has not yet been executed.
+    pub fn update_multisig_config(
+        env: Env,
+        threshold: u32,
+        signers: Vec<Address>,
+    ) -> Result<(), UpgradeError> {
+        let owner = Self::require_owner(env.clone())?;
+        owner.require_auth();
+
+        if threshold == 0 {
+            return Err(UpgradeError::InvalidThreshold);
+        }
+        if signers.len() > MAX_SIGNERS || threshold > signers.len() {
+            return Err(UpgradeError::InvalidSigner);
+        }
+
+        let config = MultisigConfig { threshold, signers };
+        env.storage()
+            .instance()
+            .set(&DataKey::MultisigConfig, &config);
+
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+
+        env.events()
+            .publish((multisig::events::multisig_updated(&env),), threshold);
+
+        Ok(())
+    }
+
+    /// View the current multisig configuration.
+    pub fn get_multisig_config(env: Env) -> Option<MultisigConfig> {
+        env.storage().instance().get(&DataKey::MultisigConfig)
+    }
+
+    /// Record the caller's approval for a pending upgrade proposal.
+    ///
+    /// `caller` must be a registered signer in the multisig config and must
+    /// authorize the call. Each signer may approve each proposal at most once;
+    /// a second call from the same address returns `DuplicateSignature`.
+    pub fn submit_multisig_signature(
+        env: Env,
+        caller: Address,
+        proposal_id: u32,
+    ) -> Result<(), UpgradeError> {
+        caller.require_auth();
+
+        let config: MultisigConfig = env
+            .storage()
+            .instance()
+            .get(&DataKey::MultisigConfig)
+            .ok_or(UpgradeError::NotInitialized)?;
+
+        if !config.signers.contains(&caller) {
+            return Err(UpgradeError::InvalidSigner);
+        }
+
+        let proposal = Self::get_proposal(env.clone(), proposal_id)
+            .ok_or(UpgradeError::ProposalNotFound)?;
+
+        if proposal.executed {
+            return Err(UpgradeError::ProposalAlreadyExecuted);
+        }
+        if proposal.cancelled {
+            return Err(UpgradeError::ProposalAlreadyCancelled);
+        }
+
+        let sig_key = DataKey::SignatureRecord(proposal_id, caller.clone());
+        if env.storage().persistent().has(&sig_key) {
+            return Err(UpgradeError::DuplicateSignature);
+        }
+        env.storage().persistent().set(&sig_key, &true);
+
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+
+        env.events().publish(
+            (multisig::events::signature_submitted(&env),),
+            (proposal_id, caller),
+        );
+
+        Ok(())
+    }
+
+    /// Execute a timelocked upgrade once the configured threshold of signers
+    /// have approved it via `submit_multisig_signature`.
+    ///
+    /// Anyone may call this once both the signature threshold and the timelock
+    /// delay are satisfied.
+    pub fn execute_multisig_upgrade(
+        env: Env,
+        proposal_id: u32,
+    ) -> Result<(), UpgradeError> {
+        let proposal = Self::get_proposal(env.clone(), proposal_id)
+            .ok_or(UpgradeError::ProposalNotFound)?;
+
+        if proposal.executed {
+            return Err(UpgradeError::ProposalAlreadyExecuted);
+        }
+        if proposal.cancelled {
+            return Err(UpgradeError::ProposalAlreadyCancelled);
+        }
+
+        let current_timestamp = env.ledger().timestamp();
+        if current_timestamp < proposal.execute_after {
+            return Err(UpgradeError::TimelockNotElapsed);
+        }
+
+        let config: MultisigConfig = env
+            .storage()
+            .instance()
+            .get(&DataKey::MultisigConfig)
+            .ok_or(UpgradeError::NotInitialized)?;
+
+        // Count unique signer approvals recorded in persistent storage.
+        let mut sig_count: u32 = 0;
+        for signer in config.signers.iter() {
+            if env
+                .storage()
+                .persistent()
+                .has(&DataKey::SignatureRecord(proposal_id, signer))
+            {
+                sig_count += 1;
+            }
+        }
+
+        if sig_count < config.threshold {
+            return Err(UpgradeError::InsufficientSignatures);
+        }
+
+        let target_account: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::TargetAccount)
+            .ok_or(UpgradeError::NotInitialized)?;
+
+        let upgrade_fn = Symbol::new(&env, "upgrade");
+        let mut args: Vec<Val> = Vec::new(&env);
+        args.push_back(proposal.wasm_hash.to_val());
+        let _: Val = env.invoke_contract(&target_account, &upgrade_fn, args);
+
+        let executed_proposal = Proposal {
+            id: proposal.id,
+            wasm_hash: proposal.wasm_hash.clone(),
+            proposed_at: proposal.proposed_at,
+            execute_after: proposal.execute_after,
+            executed: true,
+            cancelled: proposal.cancelled,
+        };
+        env.storage()
+            .instance()
+            .set(&DataKey::Proposal(proposal_id), &executed_proposal);
+
+        env.storage()
+            .instance()
+            .extend_ttl(INSTANCE_BUMP_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+
+        env.events()
+            .publish((events::executed(&env),), (proposal_id, proposal.wasm_hash));
+
+        Ok(())
     }
 
     /// View the current owner address.
@@ -752,5 +943,174 @@ mod test {
         assert_eq!(v.max_wasm_size, 0);
         assert_eq!(v.required_exports.len(), 0);
         assert_eq!(v.forbidden_imports.len(), 0);
+    }
+
+    // ── Multisig tests ─────────────────────────────────────────────────────────
+
+    fn setup_multisig(
+        env: &Env,
+        client: &UpgradeGovernorClient,
+        threshold: u32,
+        signers: &[&Address],
+    ) {
+        let mut signer_vec: Vec<Address> = Vec::new(env);
+        for s in signers {
+            signer_vec.push_back((*s).clone());
+        }
+        client.update_multisig_config(&threshold, &signer_vec);
+    }
+
+    #[test]
+    fn test_update_multisig_config_stores_correctly() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, UpgradeGovernor);
+        let client = UpgradeGovernorClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        let target = Address::generate(&env);
+        init(&env, &client, &owner, &target);
+
+        let signer_a = Address::generate(&env);
+        let signer_b = Address::generate(&env);
+        setup_multisig(&env, &client, 2, &[&signer_a, &signer_b]);
+
+        let cfg = client.get_multisig_config().unwrap();
+        assert_eq!(cfg.threshold, 2);
+        assert_eq!(cfg.signers.len(), 2);
+    }
+
+    #[test]
+    fn test_update_multisig_config_rejects_zero_threshold() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, UpgradeGovernor);
+        let client = UpgradeGovernorClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        let target = Address::generate(&env);
+        init(&env, &client, &owner, &target);
+
+        let signer_a = Address::generate(&env);
+        let mut signers: Vec<Address> = Vec::new(&env);
+        signers.push_back(signer_a);
+
+        let result = client.try_update_multisig_config(&0, &signers);
+        assert!(matches!(result, Err(Ok(UpgradeError::InvalidThreshold))));
+    }
+
+    #[test]
+    fn test_update_multisig_config_rejects_threshold_exceeding_signers() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, UpgradeGovernor);
+        let client = UpgradeGovernorClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        let target = Address::generate(&env);
+        init(&env, &client, &owner, &target);
+
+        let signer_a = Address::generate(&env);
+        let mut signers: Vec<Address> = Vec::new(&env);
+        signers.push_back(signer_a);
+
+        // threshold=3 but only 1 signer
+        let result = client.try_update_multisig_config(&3, &signers);
+        assert!(matches!(result, Err(Ok(UpgradeError::InvalidSigner))));
+    }
+
+    #[test]
+    fn test_submit_signature_rejects_non_signer() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, UpgradeGovernor);
+        let client = UpgradeGovernorClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        let target = Address::generate(&env);
+        init(&env, &client, &owner, &target);
+
+        let signer_a = Address::generate(&env);
+        setup_multisig(&env, &client, 1, &[&signer_a]);
+
+        // propose a valid upgrade
+        let wasm_hash = BytesN::from_array(&env, &[1u8; 32]);
+        let proposal_id = client.propose_upgrade(&wasm_hash, &default_attestation(&env));
+
+        // an address that is NOT a registered signer
+        let outsider = Address::generate(&env);
+        let result = client.try_submit_multisig_signature(&outsider, &proposal_id);
+        assert!(matches!(result, Err(Ok(UpgradeError::InvalidSigner))));
+    }
+
+    #[test]
+    fn test_submit_signature_rejects_duplicate() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, UpgradeGovernor);
+        let client = UpgradeGovernorClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        let target = Address::generate(&env);
+        init(&env, &client, &owner, &target);
+
+        let signer_a = Address::generate(&env);
+        setup_multisig(&env, &client, 1, &[&signer_a]);
+
+        let wasm_hash = BytesN::from_array(&env, &[1u8; 32]);
+        let proposal_id = client.propose_upgrade(&wasm_hash, &default_attestation(&env));
+
+        client.submit_multisig_signature(&signer_a, &proposal_id);
+
+        // second submission from same signer must fail
+        let result = client.try_submit_multisig_signature(&signer_a, &proposal_id);
+        assert!(matches!(result, Err(Ok(UpgradeError::DuplicateSignature))));
+    }
+
+    #[test]
+    fn test_execute_multisig_rejects_below_threshold() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, UpgradeGovernor);
+        let client = UpgradeGovernorClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        let target = Address::generate(&env);
+        init(&env, &client, &owner, &target);
+
+        let signer_a = Address::generate(&env);
+        let signer_b = Address::generate(&env);
+        // threshold = 2, but only signer_a will sign
+        setup_multisig(&env, &client, 2, &[&signer_a, &signer_b]);
+
+        env.ledger().set_timestamp(1000);
+        let wasm_hash = BytesN::from_array(&env, &[1u8; 32]);
+        let proposal_id = client.propose_upgrade(&wasm_hash, &default_attestation(&env));
+
+        client.submit_multisig_signature(&signer_a, &proposal_id);
+
+        // advance past timelock
+        env.ledger().set_timestamp(1011);
+
+        let result = client.try_execute_multisig_upgrade(&proposal_id);
+        assert!(matches!(result, Err(Ok(UpgradeError::InsufficientSignatures))));
+    }
+
+    #[test]
+    fn test_execute_multisig_rejects_before_timelock() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, UpgradeGovernor);
+        let client = UpgradeGovernorClient::new(&env, &contract_id);
+
+        let owner = Address::generate(&env);
+        let target = Address::generate(&env);
+        init(&env, &client, &owner, &target);
+
+        let signer_a = Address::generate(&env);
+        setup_multisig(&env, &client, 1, &[&signer_a]);
+
+        env.ledger().set_timestamp(1000);
+        let wasm_hash = BytesN::from_array(&env, &[1u8; 32]);
+        let proposal_id = client.propose_upgrade(&wasm_hash, &default_attestation(&env));
+
+        client.submit_multisig_signature(&signer_a, &proposal_id);
+
+        // timelock not elapsed (execute_after = 1010)
+        let result = client.try_execute_multisig_upgrade(&proposal_id);
+        assert!(matches!(result, Err(Ok(UpgradeError::TimelockNotElapsed))));
     }
 }
