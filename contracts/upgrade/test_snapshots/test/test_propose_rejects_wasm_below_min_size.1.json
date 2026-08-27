@@ -29,8 +29,58 @@
         }
       ]
     ],
-    [],
-    [],
+    [
+      [
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+        {
+          "function": {
+            "contract_fn": {
+              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
+              "function_name": "set_contract_validation",
+              "args": [
+                {
+                  "map": [
+                    {
+                      "key": {
+                        "symbol": "forbidden_imports"
+                      },
+                      "val": {
+                        "vec": []
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "max_wasm_size"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "min_wasm_size"
+                      },
+                      "val": {
+                        "u32": 1024
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "required_exports"
+                      },
+                      "val": {
+                        "vec": []
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          "sub_invocations": []
+        }
+      ]
+    ],
     []
   ],
   "ledger": {
@@ -66,6 +116,51 @@
                       "wasm": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
                     },
                     "storage": [
+                      {
+                        "key": {
+                          "vec": [
+                            {
+                              "symbol": "ContractValidation"
+                            }
+                          ]
+                        },
+                        "val": {
+                          "map": [
+                            {
+                              "key": {
+                                "symbol": "forbidden_imports"
+                              },
+                              "val": {
+                                "vec": []
+                              }
+                            },
+                            {
+                              "key": {
+                                "symbol": "max_wasm_size"
+                              },
+                              "val": {
+                                "u32": 0
+                              }
+                            },
+                            {
+                              "key": {
+                                "symbol": "min_wasm_size"
+                              },
+                              "val": {
+                                "u32": 1024
+                              }
+                            },
+                            {
+                              "key": {
+                                "symbol": "required_exports"
+                              },
+                              "val": {
+                                "vec": []
+                              }
+                            }
+                          ]
+                        }
+                      },
                       {
                         "key": {
                           "vec": [
@@ -146,6 +241,39 @@
                 "key": {
                   "ledger_key_nonce": {
                     "nonce": 801925984706572462
+                  }
+                },
+                "durability": "temporary",
+                "val": "void"
+              }
+            },
+            "ext": "v0"
+          },
+          6311999
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+            "key": {
+              "ledger_key_nonce": {
+                "nonce": 5541220902715666415
+              }
+            },
+            "durability": "temporary"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+                "key": {
+                  "ledger_key_nonce": {
+                    "nonce": 5541220902715666415
                   }
                 },
                 "durability": "temporary",
@@ -273,10 +401,45 @@
                 "bytes": "0000000000000000000000000000000000000000000000000000000000000001"
               },
               {
-                "symbol": "get_owner"
+                "symbol": "set_contract_validation"
               }
             ],
-            "data": "void"
+            "data": {
+              "map": [
+                {
+                  "key": {
+                    "symbol": "forbidden_imports"
+                  },
+                  "val": {
+                    "vec": []
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "max_wasm_size"
+                  },
+                  "val": {
+                    "u32": 0
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "min_wasm_size"
+                  },
+                  "val": {
+                    "u32": 1024
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "required_exports"
+                  },
+                  "val": {
+                    "vec": []
+                  }
+                }
+              ]
+            }
           }
         }
       },
@@ -294,12 +457,10 @@
                 "symbol": "fn_return"
               },
               {
-                "symbol": "get_owner"
+                "symbol": "set_contract_validation"
               }
             ],
-            "data": {
-              "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
-            }
+            "data": "void"
           }
         }
       },
@@ -320,10 +481,44 @@
                 "bytes": "0000000000000000000000000000000000000000000000000000000000000001"
               },
               {
-                "symbol": "get_timelock_delay"
+                "symbol": "propose_upgrade"
               }
             ],
-            "data": "void"
+            "data": {
+              "vec": [
+                {
+                  "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
+                },
+                {
+                  "map": [
+                    {
+                      "key": {
+                        "symbol": "exports"
+                      },
+                      "val": {
+                        "vec": []
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "imports"
+                      },
+                      "val": {
+                        "vec": []
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "wasm_size"
+                      },
+                      "val": {
+                        "u32": 512
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
           }
         }
       },
@@ -341,16 +536,43 @@
                 "symbol": "fn_return"
               },
               {
-                "symbol": "get_timelock_delay"
+                "symbol": "propose_upgrade"
               }
             ],
             "data": {
-              "u64": 10
+              "error": {
+                "contract": 11
+              }
             }
           }
         }
       },
-      "failed_call": false
+      "failed_call": true
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000001",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "error"
+              },
+              {
+                "error": {
+                  "contract": 11
+                }
+              }
+            ],
+            "data": {
+              "string": "escalating Ok(ScErrorType::Contract) frame-exit to Err"
+            }
+          }
+        }
+      },
+      "failed_call": true
     },
     {
       "event": {
@@ -361,38 +583,58 @@
           "v0": {
             "topics": [
               {
-                "symbol": "fn_call"
+                "symbol": "error"
               },
               {
-                "bytes": "0000000000000000000000000000000000000000000000000000000000000001"
-              },
-              {
-                "symbol": "get_target_account"
-              }
-            ],
-            "data": "void"
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000001",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_return"
-              },
-              {
-                "symbol": "get_target_account"
+                "error": {
+                  "contract": 11
+                }
               }
             ],
             "data": {
-              "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+              "vec": [
+                {
+                  "string": "contract try_call failed"
+                },
+                {
+                  "symbol": "propose_upgrade"
+                },
+                {
+                  "vec": [
+                    {
+                      "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
+                    },
+                    {
+                      "map": [
+                        {
+                          "key": {
+                            "symbol": "exports"
+                          },
+                          "val": {
+                            "vec": []
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "imports"
+                          },
+                          "val": {
+                            "vec": []
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "wasm_size"
+                          },
+                          "val": {
+                            "u32": 512
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
             }
           }
         }
