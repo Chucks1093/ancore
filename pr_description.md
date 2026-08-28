@@ -1,6 +1,7 @@
 ## Description
 
 Fix 4 web-dashboard issues:
+
 - Update navigation paths to use registered routes (QuickActionBar and OnboardingHints)
 - Add runtime shape validation to localStorage loaders (contactsStorage and splitBillStorage)
 - Remove hardcoded demo handles from production handle resolver
