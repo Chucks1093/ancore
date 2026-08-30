@@ -59,12 +59,10 @@ describe('Request Logger Middleware', () => {
   it('redacts a secret-shaped accountId before logging', async () => {
     const stellarSecret = 'S' + 'A'.repeat(55);
 
-    const response = await request(app)
-      .post('/agent/draft-intent')
-      .send({
-        prompt: 'Send $5 to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
-        accountId: stellarSecret,
-      });
+    const response = await request(app).post('/agent/draft-intent').send({
+      prompt: 'Send $5 to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
+      accountId: stellarSecret,
+    });
 
     expect(response.status).toBe(200);
 
@@ -79,13 +77,11 @@ describe('Request Logger Middleware', () => {
   it('redacts an API-key-shaped intentType before logging', async () => {
     const apiKey = 'sk-ant-api03-' + 'a'.repeat(40);
 
-    const response = await request(app)
-      .post('/agent/draft-intent')
-      .send({
-        prompt: 'Send $5 to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
-        accountId: '123',
-        type: apiKey,
-      });
+    const response = await request(app).post('/agent/draft-intent').send({
+      prompt: 'Send $5 to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
+      accountId: '123',
+      type: apiKey,
+    });
 
     // The request may fail validation (an API-key string isn't a real
     // intent type) — that's fine, request_complete still fires either way.
@@ -99,12 +95,10 @@ describe('Request Logger Middleware', () => {
   });
 
   it('leaves an ordinary, non-secret-shaped accountId unredacted', async () => {
-    const response = await request(app)
-      .post('/agent/draft-intent')
-      .send({
-        prompt: 'Send $5 to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
-        accountId: 'account_42',
-      });
+    const response = await request(app).post('/agent/draft-intent').send({
+      prompt: 'Send $5 to GDKRY7GNU3CJQX6FMT2BIPW5ELSZAHOV4DKRY7GNU3CJQX6FMT2BIPW5',
+      accountId: 'account_42',
+    });
 
     expect(response.status).toBe(200);
 

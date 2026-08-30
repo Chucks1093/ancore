@@ -114,7 +114,7 @@ describe('WalletImportScreen', () => {
   it('displays updated placeholder and supports 24-word phrases', () => {
     render(<WalletImportScreen />);
     expect(
-      screen.getByPlaceholderText(/enter your recovery phrase \(12-24 words\)/i),
+      screen.getByPlaceholderText(/enter your recovery phrase \(12-24 words\)/i)
     ).toBeInTheDocument();
   });
 });
