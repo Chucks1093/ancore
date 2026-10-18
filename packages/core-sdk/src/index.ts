@@ -5,7 +5,11 @@
 
 export const SDK_VERSION = '0.1.0';
 
-export { CONTRACT_EVENTS, type ContractEventName } from '@ancore/wallet-shared';
+export {
+  CONTRACT_EVENTS,
+  type ContractEventName,
+  type ContractEventTopic,
+} from '@ancore/wallet-shared';
 
 export {
   createWallet,

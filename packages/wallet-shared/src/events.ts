@@ -1,8 +1,7 @@
 /**
- * Canonical Soroban contract event symbol constants (Issue #1538).
- * Kept aligned with contracts/account/src/lib.rs (mod events).
+ * Canonical Soroban account contract event topics (Issue #1538).
+ * Kept aligned with the `events` module in contracts/account/src/lib.rs.
  */
-
 export const CONTRACT_EVENTS = {
   INITIALIZED: 'initialized',
   EXECUTED: 'executed',
@@ -17,6 +16,22 @@ export const CONTRACT_EVENTS = {
   THRESHOLD_CHANGED: 'threshold_changed',
   MODULE_REGISTERED: 'module_registered',
   MODULE_UNREGISTERED: 'module_unregistered',
+
+  // Lowercase topic strings matching contract event symbol literals
+  initialized: 'initialized',
+  executed: 'executed',
+  session_key_added: 'session_key_added',
+  session_key_revoked: 'session_key_revoked',
+  allowed_contracts_set: 'allowed_contracts_set',
+  upgraded: 'upgraded',
+  migrated: 'migrated',
+  session_key_ttl_refreshed: 'session_key_ttl_refreshed',
+  owner_added: 'owner_added',
+  owner_removed: 'owner_removed',
+  threshold_changed: 'threshold_changed',
+  module_registered: 'module_registered',
+  module_unregistered: 'module_unregistered',
 } as const;
 
 export type ContractEventName = (typeof CONTRACT_EVENTS)[keyof typeof CONTRACT_EVENTS];
+export type ContractEventTopic = ContractEventName;

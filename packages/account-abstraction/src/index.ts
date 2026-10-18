@@ -25,8 +25,19 @@ export {
   type SorobanRpcServer,
 } from './client';
 
-export { CONTRACT_EVENTS, type ContractEventName } from '@ancore/wallet-shared';
-export { validateSessionKeyPolicy, type ValidationResult } from './validation';
+export {
+  CONTRACT_EVENTS,
+  type ContractEventName,
+  type ContractEventTopic,
+} from '@ancore/wallet-shared';
+export { validateSessionKeyPolicy } from './validation';
+export type {
+  PolicyAmount,
+  SessionKeyPolicy,
+  SessionKeyPolicyErrorCode,
+  SessionKeyPolicyValidationError,
+  ValidationResult,
+} from './validation';
 
 export { getOwner, getNonce, getVersion } from './get-owner-nonce';
 export { getSessionKey } from './get-session-key';
