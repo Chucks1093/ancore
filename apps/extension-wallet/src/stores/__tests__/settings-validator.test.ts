@@ -46,9 +46,9 @@ describe('setAutoLockMinutes — bounds validation', () => {
   });
 
   it('rejects a numeric string', () => {
-    expect(() => useSettingsStore.getState().setAutoLockMinutes('15' as unknown as number)).toThrow(
-      RangeError
-    );
+    expect(() =>
+      useSettingsStore.getState().setAutoLockMinutes('15' as unknown as number)
+    ).toThrow(RangeError);
   });
 
   it('does not mutate state when validation fails', () => {

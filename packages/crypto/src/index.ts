@@ -59,6 +59,7 @@ export {
   generateMnemonic,
   validateMnemonic,
   validateMnemonicStrength,
+  isValidMnemonicChecksum,
   getEnglishWordlist,
   MnemonicValidationError,
   UnsupportedMnemonicLanguageError,

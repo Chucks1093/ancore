@@ -73,7 +73,7 @@ describe('HTTP server keep-alive timeouts', () => {
     resetEnvCache();
   });
 
-  it('sets keepAliveTimeout >= 65000ms and headersTimeout > keepAliveTimeout', () => {
+  it('sets keepAliveTimeout >= 65000ms and headersTimeout > keepAliveTimeout', (done) => {
     const app = createApp();
     const server = http.createServer(app);
     server.keepAliveTimeout = 65_000;
@@ -81,5 +81,7 @@ describe('HTTP server keep-alive timeouts', () => {
 
     expect(server.keepAliveTimeout).toBeGreaterThanOrEqual(65_000);
     expect(server.headersTimeout).toBeGreaterThan(server.keepAliveTimeout);
+
+    server.close(done);
   });
 });

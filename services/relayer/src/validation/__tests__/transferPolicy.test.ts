@@ -1,6 +1,6 @@
 import { validateAssetCode, validateIssuer } from '../transferPolicy';
 
-const VALID_ISSUER = 'GDBXHJ53TGKDOP2O3Q5TKXPMGTHA2OPT5BCBYFCRF4PE3EODQLWYPUIQ';
+const VALID_ISSUER = 'GAHJJJKMOKYE4RVPZEWZTKH5FVI4PA3VL7GK2LFNUBSGBV3AKSKPD3FN';
 
 describe('validateAssetCode', () => {
   it('accepts native XLM codes', () => {
